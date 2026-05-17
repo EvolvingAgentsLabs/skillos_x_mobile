@@ -1,0 +1,34 @@
+{
+  "name": "skillos_x_mobile",
+  "version": "0.1.0",
+  "description": "Skill-driven mobile care assistant — medication, exercise, social check-in via function calling",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "start": "tsx src/main.ts",
+    "start:stub": "tsx src/main.ts --stub",
+    "start:gemma4": "tsx src/main.ts --stub --backend gemma4",
+    "start:gemini": "tsx src/main.ts --stub --backend gemini",
+    "start:anthropic": "tsx src/main.ts --stub --backend anthropic",
+    "chat": "tsx src/main.ts --backend gemma4",
+    "chat:gemma4": "tsx src/main.ts --backend gemma4",
+    "chat:gemini": "tsx src/main.ts --backend gemini",
+    "dream": "tsx src/dream_cli.ts",
+    "dream:gemini": "tsx src/dream_cli.ts --backend gemini",
+    "dream:50": "tsx src/dream_cli.ts --max-transcripts 50"
+  },
+  "keywords": ["mobile", "care", "skills", "gemma4", "function-calling"],
+  "author": "EvolvingAgentsLabs",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/ws": "^8.5.14",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

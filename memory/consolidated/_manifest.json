@@ -1,0 +1,8 @@
+{
+  "name": "consolidated",
+  "description": "Dream-consolidated care memories. Health patterns, medication adherence, exercise progress, and social interaction history.",
+  "instructions": "This store contains consolidated knowledge from past care sessions. Check here for health trends, medication schedules, and user preferences.",
+  "access": "read_write",
+  "created": "2026-05-16T00:49:21.088Z",
+  "maxSizeBytes": 102400
+}

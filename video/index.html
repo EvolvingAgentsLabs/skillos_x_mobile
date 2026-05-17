@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: #1a1a2e; font-family: 'Inter', -apple-system, sans-serif; color: #ffffff;
+      }
+      .scene {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 60px;
+      }
+
+      /* ══════════════ GEMMA MASCOT (Green/Blue Sprite) ══════════════ */
+      .clawd {
+        position: relative; width: 120px; height: 110px;
+        animation: sprite-bob 1.2s ease-in-out infinite;
+      }
+      .clawd-body {
+        position: absolute; top: 16px; left: 16px;
+        width: 88px; height: 64px;
+        background: linear-gradient(180deg, #34d399 0%, #06b6d4 100%);
+        border-radius: 12px 12px 8px 8px;
+        box-shadow:
+          0 0 0 3px #0d9488,
+          0 4px 12px rgba(6, 182, 212, 0.4);
+      }
+      /* Pixel "ears" / antennae */
+      .clawd-body::before, .clawd-body::after {
+        content: ''; position: absolute; top: -12px;
+        width: 16px; height: 16px; background: #34d399;
+        border-radius: 4px; border: 2px solid #0d9488;
+      }
+      .clawd-body::before { left: 14px; }
+      .clawd-body::after { right: 14px; }
+      /* Eyes with blink animation */
+      .clawd-eye-l, .clawd-eye-r {
+        position: absolute; width: 14px; height: 14px;
+        background: #ffffff; border-radius: 50%; top: 30px;
+        box-shadow: inset 0 0 0 5px #0f172a;
+        animation: sprite-blink 3s ease-in-out infinite;
+      }
+      .clawd-eye-l { left: 34px; }
+      .clawd-eye-r { left: 72px; }
+      /* Pupil shine */
+      .clawd-eye-l::after, .clawd-eye-r::after {
+        content: ''; position: absolute; top: 2px; right: 2px;
+        width: 4px; height: 4px; background: #ffffff; border-radius: 50%;
+      }
+      /* Legs with walk animation */
+      .clawd-leg {
+        position: absolute; width: 18px; height: 20px;
+        background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%);
+        bottom: 0; border-radius: 4px 4px 6px 6px;
+        border: 2px solid #0d9488;
+      }
+      .clawd-leg-l {
+        left: 24px;
+        animation: walk-left 0.6s ease-in-out infinite;
+      }
+      .clawd-leg-r {
+        right: 24px;
+        animation: walk-right 0.6s ease-in-out infinite;
+      }
+      /* Arms / claws */
+      .clawd-claw-l, .clawd-claw-r {
+        position: absolute; width: 22px; height: 16px;
+        background: #34d399; border-radius: 6px;
+        top: 44px; border: 2px solid #0d9488;
+        animation: claw-wave 1.5s ease-in-out infinite;
+      }
+      .clawd-claw-l { left: -4px; transform-origin: right center; }
+      .clawd-claw-r { right: -4px; transform-origin: left center; animation-delay: 0.3s; }
+      /* Mouth */
+      .clawd-mouth {
+        position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+        width: 20px; height: 8px; background: #0f172a;
+        border-radius: 0 0 10px 10px;
+      }
+
+      /* Size variants */
+      .clawd-large { transform: scale(2.5); }
+      .clawd-medium { transform: scale(1.8); }
+
+      /* Happy variation — curved eyes */
+      .clawd-happy .clawd-eye-l, .clawd-happy .clawd-eye-r {
+        height: 7px; border-radius: 8px 8px 0 0; top: 34px;
+        box-shadow: inset 0 0 0 4px #0f172a;
+        animation: none;
+      }
+      .clawd-happy .clawd-mouth {
+        width: 24px; height: 10px; border-radius: 0 0 12px 12px;
+        background: #0f172a;
+        box-shadow: inset 0 -3px 0 #ef4444;
+      }
+
+      /* ══════ SPRITE ANIMATIONS ══════ */
+      @keyframes sprite-bob {
+        0%, 100% { margin-top: 0px; }
+        50% { margin-top: -6px; }
+      }
+
+      @keyframes sprite-blink {
+        0%, 42%, 46%, 100% { transform: scaleY(1); }
+        44% { transform: scaleY(0.1); }
+      }
+
+      @keyframes walk-left {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-4px) rotate(-8deg); }
+      }
+      @keyframes walk-right {
+        0%, 100% { transform: translateY(-4px) rotate(8deg); }
+        50% { transform: translateY(0) rotate(0deg); }
+      }
+
+      @keyframes claw-wave {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+      }
+
+      /* ══════════════ SPEECH BUBBLE ══════════════ */
+      .speech-bubble {
+        position: relative; background: #ffffff; color: #1a1a2e;
+        border-radius: 20px; padding: 24px 36px;
+        font-size: 28px; line-height: 1.5; max-width: 900px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+      .speech-bubble::after {
+        content: ''; position: absolute; bottom: -16px; left: 60px;
+        border: 12px solid transparent; border-top-color: #ffffff;
+      }
+      .speech-bubble-right::after {
+        left: auto; right: 60px;
+      }
+
+      /* ════════���═════ PHONE MOCKUP ══════════════ */
+      .phone {
+        position: relative; width: 380px; height: 780px;
+        background: #0d0d1a; border: 4px solid #444;
+        border-radius: 40px; padding: 60px 20px 40px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        overflow: hidden;
+      }
+      .phone-notch {
+        position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+        width: 120px; height: 28px; background: #222; border-radius: 14px;
+      }
+      .phone-screen {
+        width: 100%; height: 100%; background: #1a1a2e;
+        border-radius: 8px; padding: 20px; overflow: hidden;
+        display: flex; flex-direction: column; gap: 12px;
+      }
+      .phone-msg {
+        padding: 12px 16px; border-radius: 16px;
+        font-size: 18px; line-height: 1.4; max-width: 85%;
+      }
+      .phone-msg-bot {
+        background: #2a2a4e; color: #e0e0ff; align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }
+      .phone-msg-user {
+        background: #4ecdc4; color: #0a0a0f; align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+      .phone-time {
+        text-align: center; font-size: 14px; color: #666; margin-bottom: 8px;
+      }
+
+      /* ══════════════ SCENE STYLES ══════════════ */
+      .time-badge {
+        position: absolute; top: 40px; left: 60px;
+        background: rgba(78, 205, 196, 0.15); border: 2px solid #4ecdc4;
+        border-radius: 30px; padding: 12px 28px;
+        font-size: 24px; font-weight: 600; color: #4ecdc4;
+      }
+      .narrator {
+        font-size: 42px; font-weight: 300; color: #a0a0c0;
+        text-align: center; line-height: 1.6; max-width: 1200px;
+        font-style: italic;
+      }
+      .title-big {
+        font-size: 72px; font-weight: 700; text-align: center; line-height: 1.2;
+      }
+      .title-medium {
+        font-size: 52px; font-weight: 600; text-align: center; line-height: 1.3;
+      }
+      .subtitle {
+        font-size: 32px; font-weight: 400; color: #a0a0b0;
+        text-align: center; margin-top: 20px;
+      }
+      .accent { color: #4ecdc4; }
+      .accent-green { color: #34d399; }
+      .accent-red { color: #ff6b6b; }
+      .accent-gold { color: #ffd700; }
+
+      .skill-tag {
+        display: inline-block; background: rgba(78, 205, 196, 0.2);
+        border: 1px solid #4ecdc4; border-radius: 8px;
+        padding: 8px 16px; font-size: 22px; color: #4ecdc4;
+        font-family: 'JetBrains Mono', monospace; margin: 6px;
+      }
+
+      .memory-card {
+        background: #16213e; border: 1px solid #333366;
+        border-radius: 12px; padding: 20px 28px;
+        font-size: 24px; line-height: 1.5; text-align: left;
+        max-width: 700px; width: 100%;
+      }
+      .memory-card-title {
+        font-size: 18px; color: #4ecdc4; font-weight: 600;
+        margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;
+      }
+
+      .dream-viz {
+        background: linear-gradient(135deg, #16213e 0%, #1a1a2e 50%, #1e0a3e 100%);
+        border: 1px solid #6b4ecf; border-radius: 16px;
+        padding: 32px; max-width: 1000px; width: 100%;
+      }
+      .dream-insight {
+        border-left: 3px solid #ff6b6b; padding: 12px 20px;
+        margin: 10px 0; font-size: 26px; color: #e0e0ff;
+      }
+      .dream-insight.positive { border-left-color: #4ecdc4; }
+
+      .persona-row {
+        display: flex; align-items: center; gap: 24px; margin: 16px 0;
+      }
+      .persona-avatar {
+        width: 80px; height: 80px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 40px; flex-shrink: 0;
+      }
+      .persona-name { font-size: 28px; font-weight: 600; }
+      .persona-desc { font-size: 22px; color: #a0a0b0; }
+
+      .stat-row {
+        display: flex; gap: 60px; justify-content: center; align-items: center;
+      }
+      .stat-item { text-align: center; }
+      .stat-number { font-size: 72px; font-weight: 800; }
+      .stat-label { font-size: 24px; color: #a0a0b0; margin-top: 8px; }
+
+      .section-label {
+        font-size: 20px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 4px; color: #4ecdc4; margin-bottom: 24px;
+      }
+
+      .logo-row {
+        display: flex; align-items: center; gap: 24px; margin-top: 40px;
+      }
+
+      .fade-bg {
+        background: radial-gradient(ellipse at center, #16213e 0%, #0a0a0f 80%);
+      }
+      .morning-bg {
+        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0d1b2a 100%);
+      }
+      .night-bg {
+        background: linear-gradient(180deg, #0a0a1a 0%, #0d0d2e 50%, #1e0a3e 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="180" data-width="1920" data-height="1080">
+
+      <!-- ════════════════════════════���══════════════════════════════════ -->
+      <!-- SCENE 1: Hook — Meet Clawd (0-10s) -->
+      <!-- ═════════════════════════════��═════════════════════════════════ -->
+      <div id="scene1" class="clip scene fade-bg" data-start="0" data-duration="10" data-track-index="1">
+        <div id="s1-clawd" style="opacity:0; margin-bottom: 40px;">
+          <div class="clawd clawd-large clawd-happy">
+            <div class="clawd-claw-l"></div>
+            <div class="clawd-claw-r"></div>
+            <div class="clawd-body"></div>
+            <div class="clawd-eye-l"></div>
+            <div class="clawd-eye-r"></div>
+            <div class="clawd-mouth"></div>
+            <div class="clawd-leg clawd-leg-l"></div>
+            <div class="clawd-leg clawd-leg-r"></div>
+          </div>
+        </div>
+        <div id="s1-text" class="narrator" style="opacity:0">
+          Meet <span class="accent-green">Gemmy</span>. Today he'll show you<br>
+          how AI can take care of someone you love.
+        </div>
+      </div>
+
+      <!-- ═════════════════════════════════════════════���═════════════════ -->
+      <!-- SCENE 2: The Problem (10-22s) -->
+      <!-- ═════════════════════════════════════════════════════════��═════ -->
+      <div id="scene2" class="clip scene fade-bg" data-start="10" data-duration="12" data-track-index="1">
+        <div id="s2-persona" class="persona-row" style="opacity:0">
+          <div class="persona-avatar" style="background:#ffccd5; color:#c0392b; font-size:50px;">M</div>
+          <div>
+            <div class="persona-name">Maria, 78</div>
+            <div class="persona-desc">Lives alone. Type 2 diabetes. Osteoarthritis.<br>4 daily medications. Family visits once a week.</div>
+          </div>
+        </div>
+        <div id="s2-problem" class="narrator" style="opacity:0; margin-top: 48px;">
+          She forgets her evening Metformin <span class="accent-red">3 out of 7 days</span>.<br>
+          Her Vitamin D has been low for weeks.<br>
+          Nobody notices until the next hospital visit.
+        </div>
+        <div id="s2-stat" style="opacity:0; margin-top: 40px;">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="stat-number accent-red">$300B</div>
+              <div class="stat-label">Annual cost of medication<br>non-adherence in the US</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number accent-red">125K</div>
+              <div class="stat-label">Preventable deaths<br>per year</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════���════════════════════════════════════════════ -->
+      <!-- SCENE 3: Morning — Clawd wakes Maria (22-38s) -->
+      <!-- ═════════════════════════════���═════════════════════════════���═══ -->
+      <div id="scene3" class="clip scene morning-bg" data-start="22" data-duration="16" data-track-index="1">
+        <div class="time-badge" id="s3-time" style="opacity:0">7:30 AM — Tuesday</div>
+        <div style="display:flex; align-items:flex-start; gap:40px; max-width:1400px; width:100%;">
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:24px;">
+            <div id="s3-clawd" style="opacity:0">
+              <div class="clawd clawd-medium clawd-happy">
+                <div class="clawd-claw-l"></div>
+                <div class="clawd-claw-r"></div>
+                <div class="clawd-body"></div>
+                <div class="clawd-eye-l"></div>
+                <div class="clawd-eye-r"></div>
+                <div class="clawd-mouth"></div>
+                <div class="clawd-leg clawd-leg-l"></div>
+                <div class="clawd-leg clawd-leg-r"></div>
+              </div>
+            </div>
+            <div id="s3-bubble1" class="speech-bubble" style="opacity:0; font-size:26px;">
+              Good morning Maria! How are your knees today?<br>
+              <span style="font-size:20px; color:#666;">I noticed you mentioned stiffness yesterday.</span>
+            </div>
+            <div id="s3-bubble2" class="speech-bubble speech-bubble-right" style="opacity:0; background:#e8fff8; font-size:24px; margin-top:16px;">
+              About a 3 out of 10. Better than yesterday!<br>
+              Did I take my morning pills?
+            </div>
+            <div id="s3-skill" style="opacity:0; margin-top:16px;">
+              <span class="skill-tag">medication-reminder.skill loaded</span>
+            </div>
+          </div>
+          <div id="s3-phone" style="opacity:0; flex-shrink:0;">
+            <div class="phone">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="phone-time">7:32 AM</div>
+                <div class="phone-msg phone-msg-bot">Good morning Maria! How are your knees feeling today?</div>
+                <div class="phone-msg phone-msg-user">About a 3 out of 10. Better!</div>
+                <div class="phone-msg phone-msg-bot">Great improvement! Let me check your medications...</div>
+                <div class="phone-msg phone-msg-bot">Lisinopril 10mg and Metformin 500mg are due now. I see you took your Amlodipine already.</div>
+                <div class="phone-msg phone-msg-user">Yes I took the Lisinopril. Forgot the Vitamin D again though...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════���════════════════════════════════════════════════ -->
+      <!-- SCENE 4: Skills — Progressive Loading (38-52s) -->
+      <!-- ════════════════��═══════════════════════════��══════════════════ -->
+      <div id="scene4" class="clip scene fade-bg" data-start="38" data-duration="14" data-track-index="1">
+        <div class="section-label" id="s4-label" style="opacity:0">Primitive 1</div>
+        <div id="s4-title" class="title-medium" style="opacity:0">
+          <span class="accent">Skills</span> — Progressive Disclosure
+        </div>
+        <div id="s4-desc" class="subtitle" style="opacity:0; max-width:1000px;">
+          The agent only loads expertise when needed.<br>
+          100 tokens idle. Full instructions on demand.
+        </div>
+        <div id="s4-flow" style="opacity:0; margin-top:48px; display:flex; flex-direction:column; gap:20px; align-items:center;">
+          <div style="display:flex; align-items:center; gap:20px;">
+            <div class="memory-card" style="max-width:400px;">
+              <div class="memory-card-title">Level 1 — Always Loaded</div>
+              <div style="font-family:monospace; font-size:20px; color:#a0a0c0;">
+                medication-reminder: "Checks adherence"<br>
+                exercise-coaching: "Guides routines"<br>
+                social-checkin: "Emotional support"<br>
+                daily-routine: "Time-of-day orchestrator"
+              </div>
+            </div>
+            <div style="font-size:48px; color:#4ecdc4;">&#8594;</div>
+            <div class="memory-card" style="max-width:400px; border-color:#4ecdc4;">
+              <div class="memory-card-title">Level 2 — On Demand</div>
+              <div style="font-family:monospace; font-size:20px; color:#e0e0ff;">
+                load_skill("medication-reminder")<br><br>
+                <span style="color:#4ecdc4;">// Returns full SKILL.md body</span><br>
+                <span style="color:#4ecdc4;">// ~2000 tokens of expertise</span>
+              </div>
+            </div>
+          </div>
+          <div id="s4-clawd" style="opacity:0; margin-top:24px;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="clawd clawd-happy" style="transform:scale(1.2)">
+                <div class="clawd-claw-l"></div>
+                <div class="clawd-claw-r"></div>
+                <div class="clawd-body"></div>
+                <div class="clawd-eye-l"></div>
+                <div class="clawd-eye-r"></div>
+                <div class="clawd-mouth"></div>
+                <div class="clawd-leg clawd-leg-l"></div>
+                <div class="clawd-leg clawd-leg-r"></div>
+              </div>
+              <span style="font-size:24px; color:#a0a0c0; font-style:italic;">"I only learn what I need, when I need it."</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════��══════════════════ -->
+      <!-- SCENE 5: Exercise Time (52-66s) -->
+      <!-- ═════════════════════════════��═════════════════════════════════ -->
+      <div id="scene5" class="clip scene morning-bg" data-start="52" data-duration="14" data-track-index="1">
+        <div class="time-badge" id="s5-time" style="opacity:0">9:15 AM — Exercise</div>
+        <div style="display:flex; align-items:center; gap:60px; max-width:1400px;">
+          <div id="s5-left" style="opacity:0; flex:1;">
+            <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px;">
+              <div class="clawd clawd-happy" style="transform:scale(1.4)">
+                <div class="clawd-claw-l"></div>
+                <div class="clawd-claw-r"></div>
+                <div class="clawd-body"></div>
+                <div class="clawd-eye-l"></div>
+                <div class="clawd-eye-r"></div>
+                <div class="clawd-mouth"></div>
+                <div class="clawd-leg clawd-leg-l"></div>
+                <div class="clawd-leg clawd-leg-r"></div>
+              </div>
+              <div class="speech-bubble" style="font-size:24px;">
+                Your knees are a 3 today — let's skip marching<br>
+                and focus on upper body. Ready for arm circles?
+              </div>
+            </div>
+            <div id="s5-checklist" style="opacity:0; margin-top:32px;">
+              <div class="memory-card" style="border-color:#4ecdc4;">
+                <div class="memory-card-title">Today's Exercises</div>
+                <div style="font-size:24px; line-height:2;">
+                  <span style="color:#4ecdc4;">&#10003;</span> Seated shoulder rolls (10 each direction)<br>
+                  <span style="color:#4ecdc4;">&#10003;</span> Arm circles (10 each side)<br>
+                  <span style="color:#4ecdc4;">&#10003;</span> Wrist rotations (8 each)<br>
+                  <span style="color:#4ecdc4;">&#10003;</span> Gentle neck stretches<br>
+                  <span style="color:#666;">&#9744;</span> Deep breathing (5 cycles)<br>
+                  <span style="color:#666;">&#9744;</span> Ankle pumps (skipped: knee pain)
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="s5-phone" style="opacity:0;">
+            <div class="phone">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="phone-time">9:18 AM</div>
+                <div class="phone-msg phone-msg-bot">Let's start with shoulder rolls. 10 forward, 10 back. I'll count with you!</div>
+                <div class="phone-msg phone-msg-user">Done! Those really help the stiffness.</div>
+                <div class="phone-msg phone-msg-bot">Now arm circles. Last week you did 8, want to try 10 today?</div>
+                <div class="phone-msg phone-msg-user">Yes! I did 10 on each side!</div>
+                <div class="phone-msg phone-msg-bot" style="background:#1a4040; color:#4ecdc4;">Progress noted: arm circles 8 &#8594; 10 reps</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- SCENE 6: Memory — Persistent (66-82s) -->
+      <!-- ════════════════════��══════════════════════════���═══════════════ -->
+      <div id="scene6" class="clip scene fade-bg" data-start="66" data-duration="16" data-track-index="1">
+        <div class="section-label" id="s6-label" style="opacity:0">Primitive 2</div>
+        <div id="s6-title" class="title-medium" style="opacity:0">
+          <span class="accent">Memory</span> — Persistent Health Records
+        </div>
+        <div id="s6-desc" class="subtitle" style="opacity:0; max-width:1000px;">
+          Every session adds to Maria's health story.<br>
+          SHA256-versioned. Survives across conversations.
+        </div>
+        <div id="s6-cards" style="opacity:0; margin-top:40px; display:flex; gap:24px; flex-wrap:wrap; justify-content:center; max-width:1400px;">
+          <div class="memory-card" style="flex:1; min-width:300px;">
+            <div class="memory-card-title">medications.md</div>
+            <div style="font-size:20px; color:#a0a0c0;">
+              Lisinopril 10mg — 95% adherence<br>
+              Metformin 500mg — <span class="accent-red">57% evening dose</span><br>
+              Vitamin D3 — <span class="accent-red">missed 4 of 7 days</span><br>
+              Amlodipine 5mg — 100% adherence
+            </div>
+          </div>
+          <div class="memory-card" style="flex:1; min-width:300px;">
+            <div class="memory-card-title">exercise.md</div>
+            <div style="font-size:20px; color:#a0a0c0;">
+              Arm circles: 8 &#8594; 10 reps (improving)<br>
+              Knee pain: avg 3.2/10 this week<br>
+              Best days: Tue, Thu (more energy)<br>
+              Skipped: marching (knee flare)
+            </div>
+          </div>
+          <div class="memory-card" style="flex:1; min-width:300px;">
+            <div class="memory-card-title">social.md</div>
+            <div style="font-size:20px; color:#a0a0c0;">
+              Sofia (daughter) — calls 2-3x/week<br>
+              Afternoon isolation: 2-5 PM daily<br>
+              Mood correlates with social contact<br>
+              Lucas's school play — excited
+            </div>
+          </div>
+        </div>
+        <div id="s6-clawd" style="opacity:0; margin-top:32px; display:flex; align-items:center; gap:16px;">
+          <div class="clawd clawd-happy" style="transform:scale(1.2)">
+            <div class="clawd-claw-l"></div>
+            <div class="clawd-claw-r"></div>
+            <div class="clawd-body"></div>
+            <div class="clawd-eye-l"></div>
+            <div class="clawd-eye-r"></div>
+            <div class="clawd-mouth"></div>
+            <div class="clawd-leg clawd-leg-l"></div>
+            <div class="clawd-leg clawd-leg-r"></div>
+          </div>
+          <span style="font-size:24px; color:#a0a0c0; font-style:italic;">"I remember everything — so Maria doesn't have to."</span>
+        </div>
+      </div>
+
+      <!-- ══════════════���═══════════════════════════════════════��════════ -->
+      <!-- SCENE 7: Afternoon Loneliness (82-96s) -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene7" class="clip scene" data-start="82" data-duration="14" data-track-index="1"
+           style="background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);">
+        <div class="time-badge" id="s7-time" style="opacity:0">3:00 PM — Lonely Afternoon</div>
+        <div style="display:flex; align-items:center; gap:50px; max-width:1400px;">
+          <div id="s7-phone" style="opacity:0;">
+            <div class="phone">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="phone-time">3:02 PM</div>
+                <div class="phone-msg phone-msg-bot">Hey Maria! How's your afternoon going?</div>
+                <div class="phone-msg phone-msg-user">Quiet. Sofia hasn't called today.</div>
+                <div class="phone-msg phone-msg-bot">She might be busy with classes. Want to talk about Lucas's school play? You mentioned it this morning!</div>
+                <div class="phone-msg phone-msg-user">Oh yes! He's playing the lion. I need to ask Sofia about the date.</div>
+                <div class="phone-msg phone-msg-bot">I'll remind you to ask her next time. Meanwhile, have you had your afternoon water?</div>
+              </div>
+            </div>
+          </div>
+          <div id="s7-right" style="opacity:0; flex:1;">
+            <div class="speech-bubble" style="font-size:24px; margin-bottom:32px;">
+              <span style="color:#4ecdc4; font-weight:600;">Pattern detected:</span><br>
+              Maria is consistently isolated 2-5 PM.<br>
+              Social contact is her primary mood regulator.
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; margin-top:24px;">
+              <div class="clawd" style="transform:scale(1.4)">
+                <div class="clawd-claw-l"></div>
+                <div class="clawd-claw-r"></div>
+                <div class="clawd-body"></div>
+                <div class="clawd-eye-l"></div>
+                <div class="clawd-eye-r"></div>
+                <div class="clawd-mouth"></div>
+                <div class="clawd-leg clawd-leg-l"></div>
+                <div class="clawd-leg clawd-leg-r"></div>
+              </div>
+              <span style="font-size:22px; color:#a0a0c0; font-style:italic;">
+                "I notice what humans miss.<br>
+                This pattern matters."
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════���════════════════════════════════════════════════ -->
+      <!-- SCENE 8: Night — Dreams Begin (96-112s) -->
+      <!-- ═════════════════════��════════════════════════��════════════════ -->
+      <div id="scene8" class="clip scene night-bg" data-start="96" data-duration="16" data-track-index="1">
+        <div class="section-label" id="s8-label" style="opacity:0">Primitive 3</div>
+        <div id="s8-title" class="title-medium" style="opacity:0">
+          <span class="accent">Dreams</span> — Offline Memory Consolidation
+        </div>
+        <div id="s8-desc" class="subtitle" style="opacity:0; max-width:1100px;">
+          While Maria sleeps, Clawd processes 9 session transcripts.<br>
+          Discovers patterns no single conversation could reveal.
+        </div>
+        <div id="s8-dream" class="dream-viz" style="opacity:0; margin-top:40px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+            <div class="clawd clawd-happy" style="transform:scale(1)">
+              <div class="clawd-claw-l"></div>
+              <div class="clawd-claw-r"></div>
+              <div class="clawd-body"></div>
+              <div class="clawd-eye-l"></div>
+              <div class="clawd-eye-r"></div>
+              <div class="clawd-mouth"></div>
+              <div class="clawd-leg clawd-leg-l"></div>
+              <div class="clawd-leg clawd-leg-r"></div>
+            </div>
+            <span style="font-size:20px; color:#a0a0c0; font-family:monospace;">npm run dream — processing 9 transcripts...</span>
+          </div>
+          <div class="dream-insight">
+            <span class="accent-red">CONCERNING:</span> Vitamin D3 missed 4 of 7 days — lab levels at 22 ng/mL (target >30)
+          </div>
+          <div class="dream-insight">
+            <span class="accent-red">CONCERNING:</span> Evening Metformin missed 3 of last 7 evenings
+          </div>
+          <div class="dream-insight positive">
+            <span class="accent">TREND:</span> Arm circles progressing from 8 to 10 reps despite osteoarthritis
+          </div>
+          <div class="dream-insight">
+            <span class="accent-gold">PATTERN:</span> Afternoon loneliness (2-5 PM) correlates with medication non-compliance
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════��════════════════════ -->
+      <!-- SCENE 9: Multi-hop Insight (112-126s) -->
+      <!-- ═══════════════════════════════��═══════════════════════════════ -->
+      <div id="scene9" class="clip scene night-bg" data-start="112" data-duration="14" data-track-index="1">
+        <div id="s9-title" class="title-medium" style="opacity:0">
+          The Insight No Human Caught
+        </div>
+        <div id="s9-chain" style="opacity:0; margin-top:48px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="memory-card" style="border-color:#ff6b6b; max-width:350px; text-align:center;">
+              <div style="font-size:22px;">Sofia doesn't call on<br>Monday/Wednesday afternoons</div>
+            </div>
+            <div style="font-size:36px; color:#4ecdc4;">&#8594;</div>
+            <div class="memory-card" style="border-color:#ff6b6b; max-width:350px; text-align:center;">
+              <div style="font-size:22px;">Maria's mood drops<br>during those hours</div>
+            </div>
+            <div style="font-size:36px; color:#4ecdc4;">&#8594;</div>
+            <div class="memory-card" style="border-color:#ff6b6b; max-width:350px; text-align:center;">
+              <div style="font-size:22px;">Evening Metformin gets<br>skipped those same nights</div>
+            </div>
+          </div>
+          <div id="s9-conclusion" style="opacity:0; margin-top:36px; text-align:center;">
+            <div style="font-size:32px; color:#ffd700; font-weight:600;">
+              Loneliness &#8594; Low mood &#8594; Medication non-adherence
+            </div>
+            <div style="font-size:24px; color:#a0a0c0; margin-top:16px;">
+              A causal chain discovered across 5 days of conversations
+            </div>
+          </div>
+        </div>
+        <div id="s9-clawd" style="opacity:0; margin-top:32px; display:flex; align-items:center; gap:16px;">
+          <div class="clawd clawd-happy" style="transform:scale(1.3)">
+            <div class="clawd-claw-l"></div>
+            <div class="clawd-claw-r"></div>
+            <div class="clawd-body"></div>
+            <div class="clawd-eye-l"></div>
+            <div class="clawd-eye-r"></div>
+            <div class="clawd-mouth"></div>
+            <div class="clawd-leg clawd-leg-l"></div>
+            <div class="clawd-leg clawd-leg-r"></div>
+          </div>
+          <span style="font-size:24px; color:#a0a0c0; font-style:italic;">"Dreams connect dots that conversations can't."</span>
+        </div>
+      </div>
+
+      <!-- ══════════���═════════════��══════════════════════════════════════ -->
+      <!-- SCENE 10: Alert to Caregiver (126-140s) -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene10" class="clip scene" data-start="126" data-duration="14" data-track-index="1"
+           style="background: linear-gradient(180deg, #0d1b2a 0%, #1a1a2e 100%);">
+        <div class="time-badge" id="s10-time" style="opacity:0">Next Morning — Sofia's Phone</div>
+        <div style="display:flex; align-items:center; gap:60px; max-width:1400px;">
+          <div id="s10-left" style="opacity:0; flex:1;">
+            <div class="persona-row" style="margin-bottom:32px;">
+              <div class="persona-avatar" style="background:#d4edff; color:#2980b9; font-size:44px;">S</div>
+              <div>
+                <div class="persona-name">Sofia (daughter)</div>
+                <div class="persona-desc">Receives weekly caregiver report</div>
+              </div>
+            </div>
+            <div class="dream-viz" style="border-color:#4ecdc4;">
+              <div style="font-size:22px; color:#4ecdc4; font-weight:600; margin-bottom:12px;">CAREGIVER INSIGHT REPORT</div>
+              <div style="font-size:22px; color:#e0e0ff; line-height:1.8;">
+                Your mother's evening medication adherence<br>
+                drops on days without afternoon social contact.<br><br>
+                <span style="color:#ffd700;">Suggestion:</span> A brief call between 2-3 PM on<br>
+                Mondays and Wednesdays could significantly<br>
+                improve her evening routine compliance.
+              </div>
+            </div>
+          </div>
+          <div id="s10-phone" style="opacity:0;">
+            <div class="phone" style="border-color:#2980b9;">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="background:#0d1b2a;">
+                <div class="phone-time">8:15 AM</div>
+                <div class="phone-msg phone-msg-bot" style="background:#1a3a5e;">
+                  Hi Sofia! Weekly update on Maria:<br><br>
+                  Medication: 85% overall (evening gap)<br>
+                  Exercise: Improving! 10 arm circles now<br>
+                  Mood: Great after your calls, drops Mon/Wed PM<br><br>
+                  One insight: calling 2-3 PM Mon/Wed would help a lot.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════��════════��═══════════════════════════════════════ -->
+      <!-- SCENE 11: Open-weight Power (140-156s) -->
+      <!-- ════════════════════���══════════════════════════════════════════ -->
+      <div id="scene11" class="clip scene fade-bg" data-start="140" data-duration="16" data-track-index="1">
+        <div id="s11-title" class="title-medium" style="opacity:0">
+          Built with <span class="accent-gold">Gemma 4</span> — Open Weight
+        </div>
+        <div id="s11-desc" class="subtitle" style="opacity:0; max-width:1000px;">
+          The same agent runs on any OpenAI-compatible provider.<br>No vendor lock-in. No proprietary API required.
+        </div>
+        <div id="s11-table" style="opacity:0; margin-top:40px; display:flex; gap:32px; justify-content:center;">
+          <div class="memory-card" style="text-align:center; border-color:#ffd700;">
+            <div class="memory-card-title" style="color:#ffd700;">Gemma 4 26B-A4B</div>
+            <div style="font-size:22px; color:#a0a0c0;">
+              Default backend<br>
+              15 tools, multi-turn<br>
+              Clinical reasoning<br>
+              <span style="color:#4ecdc4;">11 turns, 34s</span>
+            </div>
+          </div>
+          <div class="memory-card" style="text-align:center;">
+            <div class="memory-card-title">Gemini 2.5 Flash</div>
+            <div style="font-size:22px; color:#a0a0c0;">
+              Fast inference<br>
+              Same 15 tools<br>
+              Same memory stores<br>
+              <span style="color:#4ecdc4;">5 turns, 12s</span>
+            </div>
+          </div>
+          <div class="memory-card" style="text-align:center;">
+            <div class="memory-card-title">Claude Sonnet 4</div>
+            <div style="font-size:22px; color:#a0a0c0;">
+              Reference baseline<br>
+              Same interface<br>
+              Native API translation<br>
+              <span style="color:#4ecdc4;">43 turns, 143s</span>
+            </div>
+          </div>
+        </div>
+        <div id="s11-clawd" style="opacity:0; margin-top:32px; display:flex; align-items:center; gap:16px;">
+          <div class="clawd clawd-happy" style="transform:scale(1.2)">
+            <div class="clawd-claw-l"></div>
+            <div class="clawd-claw-r"></div>
+            <div class="clawd-body"></div>
+            <div class="clawd-eye-l"></div>
+            <div class="clawd-eye-r"></div>
+            <div class="clawd-mouth"></div>
+            <div class="clawd-leg clawd-leg-l"></div>
+            <div class="clawd-leg clawd-leg-r"></div>
+          </div>
+          <span style="font-size:24px; color:#a0a0c0; font-style:italic;">"Same care quality. Any model. Your choice."</span>
+        </div>
+      </div>
+
+      <!-- ═════════���═════════════════════════════════════════════════════ -->
+      <!-- SCENE 12: Impact Numbers (156-168s) -->
+      <!-- ═════════════════════════════════════════════════��═════════════ -->
+      <div id="scene12" class="clip scene fade-bg" data-start="156" data-duration="12" data-track-index="1">
+        <div id="s12-title" class="title-medium" style="opacity:0">
+          5 Days. 9 Sessions. <span class="accent">Real Insights.</span>
+        </div>
+        <div id="s12-stats" style="opacity:0; margin-top:48px;">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="stat-number accent">20+</div>
+              <div class="stat-label">Medication events tracked</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number accent-red">57%</div>
+              <div class="stat-label">Evening Metformin gap found</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number accent-gold">4</div>
+              <div class="stat-label">Clinical insights discovered</div>
+            </div>
+          </div>
+        </div>
+        <div id="s12-clawd" style="opacity:0; margin-top:48px;">
+          <div style="display:flex; align-items:center; gap:20px; justify-content:center;">
+            <div class="clawd clawd-large clawd-happy">
+              <div class="clawd-claw-l"></div>
+              <div class="clawd-claw-r"></div>
+              <div class="clawd-body"></div>
+              <div class="clawd-eye-l"></div>
+              <div class="clawd-eye-r"></div>
+              <div class="clawd-mouth"></div>
+              <div class="clawd-leg clawd-leg-l"></div>
+              <div class="clawd-leg clawd-leg-r"></div>
+            </div>
+            <span class="narrator" style="font-size:32px;">"Scale me to millions of patients<br>and we save lives."</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════��════════════ -->
+      <!-- SCENE 13: Closing (168-180s) -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene13" class="clip scene fade-bg" data-start="168" data-duration="12" data-track-index="1">
+        <div id="s13-clawd" style="opacity:0; margin-bottom:32px;">
+          <div class="clawd clawd-large clawd-happy">
+            <div class="clawd-claw-l"></div>
+            <div class="clawd-claw-r"></div>
+            <div class="clawd-body"></div>
+            <div class="clawd-eye-l"></div>
+            <div class="clawd-eye-r"></div>
+            <div class="clawd-mouth"></div>
+            <div class="clawd-leg clawd-leg-l"></div>
+            <div class="clawd-leg clawd-leg-r"></div>
+          </div>
+        </div>
+        <div id="s13-title" class="title-big" style="opacity:0">
+          <span class="accent">CareCompanion</span>
+        </div>
+        <div id="s13-sub" class="subtitle" style="opacity:0">
+          Skills, Memory & Dreams for AI Health Agents
+        </div>
+        <div id="s13-tags" style="opacity:0; margin-top:32px;">
+          <span class="skill-tag">Gemma 4 26B-A4B</span>
+          <span class="skill-tag">Open Source</span>
+          <span class="skill-tag">Apache 2.0</span>
+        </div>
+        <div id="s13-footer" style="opacity:0; margin-top:48px; text-align:center;">
+          <div style="font-size:28px; color:#a0a0c0;">Gemma 4 Good Hackathon — Health &amp; Sciences Track</div>
+          <div style="font-size:22px; color:#666680; margin-top:16px;">github.com/EvolvingAgentsLabs/skillos_x_mobile</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+
+      /* Scene 1: Hook - Meet Clawd */
+      tl.to("#s1-clawd", { opacity: 1, y: -20, duration: 1.2, ease: "back.out(1.4)" }, 0.5);
+      tl.to("#s1-text", { opacity: 1, duration: 1.5 }, 2);
+
+      /* Scene 2: The Problem */
+      tl.to("#s2-persona", { opacity: 1, x: 0, duration: 1.2, ease: "power2.out" }, 10.5);
+      tl.to("#s2-problem", { opacity: 1, duration: 1.5 }, 13);
+      tl.to("#s2-stat", { opacity: 1, y: -10, duration: 1.2 }, 16);
+
+      /* Scene 3: Morning - Medication */
+      tl.to("#s3-time", { opacity: 1, duration: 0.8 }, 22.5);
+      tl.to("#s3-clawd", { opacity: 1, duration: 1 }, 23.5);
+      tl.to("#s3-bubble1", { opacity: 1, y: -10, duration: 1 }, 25);
+      tl.to("#s3-bubble2", { opacity: 1, y: -10, duration: 1 }, 28);
+      tl.to("#s3-phone", { opacity: 1, x: 0, duration: 1.2 }, 30);
+      tl.to("#s3-skill", { opacity: 1, duration: 0.8 }, 33);
+
+      /* Scene 4: Skills */
+      tl.to("#s4-label", { opacity: 1, duration: 0.8 }, 38.5);
+      tl.to("#s4-title", { opacity: 1, y: -10, duration: 1.2 }, 39.5);
+      tl.to("#s4-desc", { opacity: 1, duration: 1 }, 41.5);
+      tl.to("#s4-flow", { opacity: 1, duration: 1.5 }, 43.5);
+      tl.to("#s4-clawd", { opacity: 1, duration: 1 }, 47);
+
+      /* Scene 5: Exercise */
+      tl.to("#s5-time", { opacity: 1, duration: 0.8 }, 52.5);
+      tl.to("#s5-left", { opacity: 1, duration: 1.2 }, 54);
+      tl.to("#s5-checklist", { opacity: 1, y: -10, duration: 1.2 }, 57);
+      tl.to("#s5-phone", { opacity: 1, x: 0, duration: 1.2 }, 59);
+
+      /* Scene 6: Memory */
+      tl.to("#s6-label", { opacity: 1, duration: 0.8 }, 66.5);
+      tl.to("#s6-title", { opacity: 1, y: -10, duration: 1.2 }, 67.5);
+      tl.to("#s6-desc", { opacity: 1, duration: 1 }, 69.5);
+      tl.to("#s6-cards", { opacity: 1, y: -10, duration: 1.5 }, 71.5);
+      tl.to("#s6-clawd", { opacity: 1, duration: 1 }, 76);
+
+      /* Scene 7: Afternoon Loneliness */
+      tl.to("#s7-time", { opacity: 1, duration: 0.8 }, 82.5);
+      tl.to("#s7-phone", { opacity: 1, x: 0, duration: 1.2 }, 84);
+      tl.to("#s7-right", { opacity: 1, x: 0, duration: 1.2 }, 87);
+
+      /* Scene 8: Dreams */
+      tl.to("#s8-label", { opacity: 1, duration: 0.8 }, 96.5);
+      tl.to("#s8-title", { opacity: 1, y: -10, duration: 1.2 }, 97.5);
+      tl.to("#s8-desc", { opacity: 1, duration: 1 }, 99.5);
+      tl.to("#s8-dream", { opacity: 1, y: -10, duration: 1.5 }, 102);
+
+      /* Scene 9: Multi-hop Insight */
+      tl.to("#s9-title", { opacity: 1, y: -10, duration: 1.2 }, 112.5);
+      tl.to("#s9-chain", { opacity: 1, duration: 1.5 }, 115);
+      tl.to("#s9-conclusion", { opacity: 1, duration: 1.2 }, 119);
+      tl.to("#s9-clawd", { opacity: 1, duration: 1 }, 122);
+
+      /* Scene 10: Caregiver Alert */
+      tl.to("#s10-time", { opacity: 1, duration: 0.8 }, 126.5);
+      tl.to("#s10-left", { opacity: 1, x: 0, duration: 1.2 }, 128);
+      tl.to("#s10-phone", { opacity: 1, x: 0, duration: 1.2 }, 131);
+
+      /* Scene 11: Open-weight */
+      tl.to("#s11-title", { opacity: 1, y: -10, duration: 1.2 }, 140.5);
+      tl.to("#s11-desc", { opacity: 1, duration: 1 }, 142.5);
+      tl.to("#s11-table", { opacity: 1, y: -10, duration: 1.5 }, 144.5);
+      tl.to("#s11-clawd", { opacity: 1, duration: 1 }, 150);
+
+      /* Scene 12: Impact */
+      tl.to("#s12-title", { opacity: 1, y: -10, duration: 1.2 }, 156.5);
+      tl.to("#s12-stats", { opacity: 1, y: -10, duration: 1.5 }, 159);
+      tl.to("#s12-clawd", { opacity: 1, duration: 1.2 }, 162);
+
+      /* Scene 13: Closing */
+      tl.to("#s13-clawd", { opacity: 1, y: -20, duration: 1.2, ease: "back.out(1.4)" }, 168.5);
+      tl.to("#s13-title", { opacity: 1, duration: 1.2 }, 170);
+      tl.to("#s13-sub", { opacity: 1, duration: 1 }, 172);
+      tl.to("#s13-tags", { opacity: 1, duration: 1 }, 174);
+      tl.to("#s13-footer", { opacity: 1, duration: 1 }, 176);
+    </script>
+  </body>
+</html>

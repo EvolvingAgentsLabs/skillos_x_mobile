@@ -1,0 +1,8 @@
+{
+  "name": "health-profile",
+  "description": "User health information: medications, exercise preferences, mobility level, family contacts, and care notes.",
+  "instructions": "Read at the start of every session to understand the user's health needs. Update when new health information is provided by the user.",
+  "access": "read_write",
+  "created": "2026-05-12T00:00:00Z",
+  "maxSizeBytes": 102400
+}

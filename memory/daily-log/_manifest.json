@@ -1,0 +1,8 @@
+{
+  "name": "daily-log",
+  "description": "Daily activity logs: medication adherence, exercise completion, mood observations, and social interactions.",
+  "instructions": "Write a daily entry after each care session. Read at the start of each session to avoid repeating completed activities. Use the date as a filename (e.g., '2026-05-12.md').",
+  "access": "read_write",
+  "created": "2026-05-12T00:00:00Z",
+  "maxSizeBytes": 102400
+}
