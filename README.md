@@ -6,11 +6,9 @@ Built for the [Gemma 4 Good Hackathon](https://www.kaggle.com/competitions/gemma
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/video_2026-05-16_20-59-28.mp4
+[![CareCompanion Demo](https://img.youtube.com/vi/8ho3SpY-rDU/maxresdefault.jpg)](https://youtu.be/8ho3SpY-rDU)
 
 > *3-minute narrative showing CareCompanion helping Maria — a 72-year-old managing diabetes, hypertension, and knee arthritis — through her daily wellness routine. Features Gemmy, our animated Gemma 4 mascot.*
-
-The video source is in [`video/index.html`](video/index.html) (HyperFrames composition). Render with `npm run render` in the `video/` directory.
 
 ---
 
