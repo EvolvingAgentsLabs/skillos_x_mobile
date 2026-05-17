@@ -39,16 +39,20 @@ export class OpenRouterBackend implements Backend {
   private readonly provider: string;
 
   constructor(config: BackendConfig = {}, provider = 'openrouter') {
+    this.baseUrl = config.baseUrl || process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
     this.apiKey = config.apiKey || process.env.OPENROUTER_API_KEY || '';
     this.model = config.model || process.env.AGENT_MODEL || 'google/gemma-4-26b-a4b-it';
-    this.baseUrl = config.baseUrl || 'https://openrouter.ai/api/v1';
     this.maxTokens = config.maxTokens || 1024;
     this.temperature = config.temperature ?? 0.3;
     this.maxRetries = config.maxRetries ?? 3;
     this.provider = provider;
 
+    // API key is optional when using a local backend (custom base URL)
     if (!this.apiKey) {
-      throw new Error('OpenRouter API key required. Set OPENROUTER_API_KEY or pass config.apiKey');
+      if (this.baseUrl === 'https://openrouter.ai/api/v1') {
+        throw new Error('OpenRouter API key required. Set OPENROUTER_API_KEY or pass config.apiKey');
+      }
+      this.apiKey = 'local';
     }
   }
 
