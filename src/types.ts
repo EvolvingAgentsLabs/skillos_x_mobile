@@ -176,4 +176,6 @@ export type WsMessage =
   | { type: 'halt'; status: string }
   | { type: 'tool_call'; name: string; args: unknown; step: number }
   | { type: 'user_message'; text: string }
-  | { type: 'waiting_for_input' };
+  | { type: 'waiting_for_input' }
+  | { type: 'dream_progress'; stage: string; detail: string }
+  | { type: 'dream_complete'; result: DreamResult };

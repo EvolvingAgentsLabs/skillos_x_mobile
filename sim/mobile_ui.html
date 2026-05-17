@@ -5,7 +5,13 @@
 <title>skillos_x_mobile — CareCompanion</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #1a1a2e; color: #e0e0e0; font-family: -apple-system, 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+  body { background: #1a1a2e; color: #e0e0e0; font-family: -apple-system, 'Segoe UI', sans-serif; display: flex; justify-content: center; height: 100vh; padding: 16px; }
+
+  /* ── Dashboard layout ────────────────────────────────────── */
+  #dashboard { display: flex; gap: 24px; width: 100%; max-width: 1400px; height: calc(100vh - 32px); }
+  #phone-column { flex: 0 0 380px; display: flex; align-items: center; }
+
+  /* ── Phone (existing chat) ───────────────────────────────── */
   #phone { width: 380px; height: 700px; background: #16213e; border-radius: 24px; border: 3px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
   #header { padding: 16px; background: #0f3460; text-align: center; }
   #header h1 { font-size: 16px; color: #53cfcf; font-weight: 600; }
@@ -37,30 +43,160 @@
   #input-area button:hover { background: #34d399; color: #fff; }
   #input-area button:disabled { background: #333; color: #666; cursor: not-allowed; }
   .typing-indicator { display: none; padding: 8px 14px; color: #888; font-size: 12px; font-style: italic; }
+
+  /* ── Right panel ─────────────────────────────────────────── */
+  #panel-column { flex: 1; display: flex; flex-direction: column; background: #16213e; border-radius: 16px; border: 1px solid #333; overflow: hidden; }
+  #panel-header { padding: 16px 20px; background: #0f3460; border-bottom: 1px solid #333; }
+  #panel-header h2 { font-size: 18px; color: #53cfcf; margin-bottom: 12px; }
+  #tab-bar { display: flex; gap: 4px; }
+  .tab { background: #1e3a5f; border: 1px solid #333; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px 20px; color: #888; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .tab.active { background: #16213e; color: #53cfcf; border-color: #53cfcf; }
+  .tab:hover { color: #e0e0e0; }
+  #panel-content { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Skills panel ────────────────────────────────────────── */
+  .skill-card { background: #1e3a5f; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
+  .skill-card:hover { border-color: #53cfcf; }
+  .skill-card-name { color: #7bed9f; font-weight: bold; font-size: 14px; }
+  .skill-card-desc { color: #999; font-size: 12px; margin-top: 4px; }
+  #skill-detail pre { background: #0a1628; padding: 16px; border-radius: 8px; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #ccc; max-height: 500px; overflow-y: auto; }
+  #skill-description { color: #999; font-size: 13px; margin-bottom: 12px; }
+
+  /* ── Memory panel ────────────────────────────────────────── */
+  .store-card { background: #1e3a5f; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
+  .store-card:hover { border-color: #53cfcf; }
+  .store-card-name { color: #e94560; font-weight: bold; font-size: 14px; }
+  .store-card-desc { color: #999; font-size: 12px; margin-top: 4px; }
+  .store-card-meta { color: #666; font-size: 11px; margin-top: 4px; }
+  .doc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #222; cursor: pointer; transition: background 0.2s; }
+  .doc-row:hover { background: #1e3a5f; }
+  .doc-row-name { color: #7bed9f; font-size: 13px; }
+  .doc-row-size { color: #666; font-size: 11px; }
+  #doc-content { width: 100%; min-height: 300px; background: #0a1628; color: #e0e0e0; border: 1px solid #444; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 13px; resize: vertical; line-height: 1.5; }
+  #doc-save { margin-top: 8px; background: #2d6a4f; color: #b7e4c7; border: none; border-radius: 8px; padding: 8px 24px; cursor: pointer; font-size: 13px; }
+  #doc-save:hover { background: #34d399; color: #fff; }
+  #doc-meta { color: #666; font-size: 11px; margin-top: 8px; }
+
+  /* ── Dreams panel ────────────────────────────────────────── */
+  #dream-run { background: #3d1f56; color: #d4a5ff; border: 1px solid #7b4faa; border-radius: 8px; padding: 12px 24px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  #dream-run:hover { background: #5a2d82; color: #fff; }
+  #dream-run:disabled { opacity: 0.5; cursor: not-allowed; }
+  #dream-progress { margin-top: 12px; padding: 12px; background: #1e3a5f; border-radius: 8px; color: #d4a5ff; font-size: 12px; display: none; }
+  .dream-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .dream-stat { background: #1e3a5f; padding: 8px 16px; border-radius: 8px; font-size: 12px; }
+  .dream-stat-label { color: #888; }
+  .dream-stat-value { color: #53cfcf; font-weight: bold; }
+  .insight-item { background: #1e3a5f; border-left: 3px solid #e94560; padding: 8px 12px; margin: 6px 0; font-size: 12px; color: #ccc; border-radius: 0 8px 8px 0; }
+  .dream-journal-pre { background: #0a1628; padding: 12px; border-radius: 8px; font-size: 12px; color: #ccc; white-space: pre-wrap; max-height: 300px; overflow-y: auto; line-height: 1.5; }
+  .trace-card { background: #1e3a5f; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; font-size: 12px; }
+  .trace-card-task { color: #7bed9f; font-weight: bold; }
+  .trace-card-meta { color: #666; font-size: 11px; margin-top: 4px; }
+  .section-title { color: #53cfcf; font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+  .section-title:first-child { margin-top: 0; }
+
+  /* ── Back buttons ────────────────────────────────────────── */
+  .back-btn { background: none; border: 1px solid #444; color: #888; border-radius: 6px; padding: 4px 12px; cursor: pointer; font-size: 12px; margin-bottom: 12px; }
+  .back-btn:hover { color: #53cfcf; border-color: #53cfcf; }
 </style>
 </head>
 <body>
-<div id="phone">
-  <div id="conn" class="disconnected">Disconnected</div>
-  <div id="header">
-    <h1>CareCompanion</h1>
-    <div class="subtitle">Your personal wellness assistant</div>
+<div id="dashboard">
+  <!-- LEFT: Phone chat -->
+  <div id="phone-column">
+    <div id="phone">
+      <div id="conn" class="disconnected">Disconnected</div>
+      <div id="header">
+        <h1>CareCompanion</h1>
+        <div class="subtitle">Your personal wellness assistant</div>
+      </div>
+      <div id="alarms"></div>
+      <div id="notifications"></div>
+      <div id="checklist-area">
+        <h3>Exercise Checklist</h3>
+        <div id="checklist"></div>
+      </div>
+      <div id="chat"></div>
+      <div class="typing-indicator" id="typing">CareCompanion is thinking...</div>
+      <div id="input-area">
+        <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off" />
+        <button id="send-btn" title="Send">&#9654;</button>
+      </div>
+    </div>
   </div>
-  <div id="alarms"></div>
-  <div id="notifications"></div>
-  <div id="checklist-area">
-    <h3>Exercise Checklist</h3>
-    <div id="checklist"></div>
-  </div>
-  <div id="chat"></div>
-  <div class="typing-indicator" id="typing">CareCompanion is thinking...</div>
-  <div id="input-area">
-    <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off" />
-    <button id="send-btn" title="Send">&#9654;</button>
+
+  <!-- RIGHT: Dashboard panels -->
+  <div id="panel-column">
+    <div id="panel-header">
+      <h2>CareCompanion Dashboard</h2>
+      <div id="tab-bar">
+        <button class="tab active" data-tab="skills">Skills</button>
+        <button class="tab" data-tab="memory">Memory</button>
+        <button class="tab" data-tab="dreams">Dreams</button>
+      </div>
+    </div>
+    <div id="panel-content">
+
+      <!-- Skills Panel -->
+      <div id="skills-panel" class="panel active">
+        <div class="section-title">Available Skills (Progressive Disclosure)</div>
+        <p style="color:#888;font-size:12px;margin-bottom:12px">The agent sees only skill names in its system prompt. It calls <code style="color:#53cfcf">load_skill(name)</code> to get full instructions on demand.</p>
+        <div id="skills-list"></div>
+        <div id="skill-detail" style="display:none">
+          <button class="back-btn" id="skill-back">&larr; Back to skills</button>
+          <h3 id="skill-name" style="color:#7bed9f;margin-bottom:4px"></h3>
+          <p id="skill-description"></p>
+          <pre id="skill-body"></pre>
+        </div>
+      </div>
+
+      <!-- Memory Panel -->
+      <div id="memory-panel" class="panel">
+        <div class="section-title">Memory Stores (SHA256-Versioned)</div>
+        <p style="color:#888;font-size:12px;margin-bottom:12px">Persistent documents that survive across sessions. The agent reads memory at session start and writes observations at session end.</p>
+        <div id="memory-stores"></div>
+        <div id="memory-docs" style="display:none">
+          <button class="back-btn" id="docs-back">&larr; Back to stores</button>
+          <h3 id="store-name" style="color:#e94560;margin-bottom:8px"></h3>
+          <div id="docs-list"></div>
+        </div>
+        <div id="memory-editor" style="display:none">
+          <button class="back-btn" id="editor-back">&larr; Back to documents</button>
+          <h3 id="doc-name" style="color:#7bed9f;margin-bottom:8px"></h3>
+          <textarea id="doc-content"></textarea>
+          <button id="doc-save">Save Changes</button>
+          <div id="doc-meta"></div>
+        </div>
+      </div>
+
+      <!-- Dreams Panel -->
+      <div id="dreams-panel" class="panel">
+        <div class="section-title">Dream Consolidation</div>
+        <p style="color:#888;font-size:12px;margin-bottom:12px">Offline process that reads all session traces + memory, then uses the LLM to reorganize knowledge and discover clinical patterns.</p>
+        <div id="dream-controls">
+          <button id="dream-run">Run Dream Consolidation</button>
+          <div id="dream-progress"></div>
+        </div>
+        <div id="dream-result" style="display:none">
+          <div class="section-title">Results</div>
+          <div id="dream-stats" class="dream-stats"></div>
+          <div id="dream-insights"></div>
+          <div id="dream-journal"></div>
+        </div>
+        <div id="dream-history">
+          <div class="section-title">Session Traces (Dream Input)</div>
+          <p style="color:#888;font-size:12px;margin-bottom:8px">Each agent conversation is recorded. The dream engine processes these to find patterns.</p>
+          <div id="traces-list"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <script>
+// ── Chat (existing functionality) ────────────────────────────
 let step = 0;
 let waitingForInput = false;
 
@@ -89,15 +225,9 @@ function sendMessage() {
   const input = document.getElementById('user-input');
   const text = input.value.trim();
   if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-
-  // Show user message in chat
   addMsg('msg-user', text);
   input.value = '';
-
-  // Send to server
   ws.send(JSON.stringify({ type: 'user_message', text }));
-
-  // Disable input and show typing
   waitingForInput = false;
   setInputEnabled(false);
   setTyping(true);
@@ -108,7 +238,7 @@ function addNotification(title, body) {
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const div = document.createElement('div');
   div.className = 'notif';
-  div.innerHTML = `<span class="notif-time">${time}</span><div class="notif-title">${title}</div><div class="notif-body">${body}</div>`;
+  div.innerHTML = `<span class="notif-time">${time}</span><div class="notif-title">${esc(title)}</div><div class="notif-body">${esc(body)}</div>`;
   el.prepend(div);
 }
 
@@ -126,13 +256,15 @@ function updateChecklist(items) {
   const el = document.getElementById('checklist');
   area.style.display = 'block';
   el.innerHTML = '';
-  items.forEach((item, i) => {
+  items.forEach((item) => {
     const div = document.createElement('div');
     div.className = `check-item${item.done ? ' done' : ''}`;
     div.textContent = `${item.done ? '\u2713' : '\u25CB'} ${item.text}`;
     el.appendChild(div);
   });
 }
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 // ── WebSocket ─────────────────────────────────────────────────
 const WS_URL = new URLSearchParams(window.location.search).get('ws') || 'ws://localhost:9093';
@@ -176,14 +308,19 @@ function connect() {
         updateChecklist(msg.items);
       } else if (msg.type === 'halt') {
         setTyping(false);
-        addMsg('msg-system', `Session complete`);
-        // Re-enable input for next interaction
+        addMsg('msg-system', 'Session complete');
         waitingForInput = true;
         setInputEnabled(true);
       } else if (msg.type === 'waiting_for_input') {
         setTyping(false);
         waitingForInput = true;
         setInputEnabled(true);
+      } else if (msg.type === 'dream_progress') {
+        const progress = document.getElementById('dream-progress');
+        progress.style.display = 'block';
+        progress.textContent = `[${msg.stage}] ${msg.detail}`;
+      } else if (msg.type === 'dream_complete') {
+        showDreamResult(msg.result);
       }
     } catch { /* ignore parse errors */ }
   };
@@ -196,6 +333,233 @@ document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('user-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') sendMessage();
 });
+
+// ── Tab switching ──────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+  });
+});
+
+// ── API base ──────────────────────────────────────────────────
+const API = window.location.origin;
+
+// ── Skills Panel ──────────────────────────────────────────────
+async function loadSkillsList() {
+  try {
+    const res = await fetch(`${API}/api/skills`);
+    const skills = await res.json();
+    const el = document.getElementById('skills-list');
+    el.innerHTML = skills.map(s => `
+      <div class="skill-card" onclick="loadSkill('${esc(s.name)}')">
+        <div class="skill-card-name">${esc(s.name)}</div>
+        <div class="skill-card-desc">${esc(s.description)}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error('Failed to load skills:', e); }
+}
+
+async function loadSkill(name) {
+  try {
+    const res = await fetch(`${API}/api/skills/${encodeURIComponent(name)}`);
+    const skill = await res.json();
+    document.getElementById('skills-list').style.display = 'none';
+    document.querySelector('#skills-panel > p').style.display = 'none';
+    document.querySelector('#skills-panel > .section-title').style.display = 'none';
+    const detail = document.getElementById('skill-detail');
+    detail.style.display = 'block';
+    document.getElementById('skill-name').textContent = skill.name;
+    document.getElementById('skill-description').textContent = skill.description;
+    document.getElementById('skill-body').textContent = skill.instructions;
+  } catch (e) { console.error('Failed to load skill:', e); }
+}
+
+document.getElementById('skill-back').addEventListener('click', () => {
+  document.getElementById('skill-detail').style.display = 'none';
+  document.getElementById('skills-list').style.display = 'block';
+  document.querySelector('#skills-panel > p').style.display = '';
+  document.querySelector('#skills-panel > .section-title').style.display = '';
+});
+
+// ── Memory Panel ──────────────────────────────────────────────
+let currentStore = null;
+let currentDocPath = null;
+
+async function loadMemoryStores() {
+  try {
+    const res = await fetch(`${API}/api/memory`);
+    const stores = await res.json();
+    const el = document.getElementById('memory-stores');
+    el.innerHTML = stores.map(s => `
+      <div class="store-card" onclick="loadStore('${esc(s.name)}')">
+        <div class="store-card-name">${esc(s.name)}</div>
+        <div class="store-card-desc">${esc(s.description)}</div>
+        <div class="store-card-meta">${s.documents} document(s) | ${s.access}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error('Failed to load memory stores:', e); }
+}
+
+async function loadStore(name) {
+  try {
+    currentStore = name;
+    const res = await fetch(`${API}/api/memory/${encodeURIComponent(name)}`);
+    const data = await res.json();
+    document.getElementById('memory-stores').style.display = 'none';
+    document.querySelector('#memory-panel > p').style.display = 'none';
+    document.querySelector('#memory-panel > .section-title').style.display = 'none';
+    document.getElementById('memory-docs').style.display = 'block';
+    document.getElementById('store-name').textContent = `${name} (${data.manifest.access})`;
+    const el = document.getElementById('docs-list');
+    el.innerHTML = data.documents.map(d => `
+      <div class="doc-row" onclick="loadDoc('${esc(name)}', '${esc(d.path)}')">
+        <span class="doc-row-name">${esc(d.path)}</span>
+        <span class="doc-row-size">${(d.sizeBytes / 1024).toFixed(1)}KB</span>
+      </div>
+    `).join('');
+  } catch (e) { console.error('Failed to load store:', e); }
+}
+
+async function loadDoc(store, docPath) {
+  try {
+    currentStore = store;
+    currentDocPath = docPath;
+    const res = await fetch(`${API}/api/memory/${encodeURIComponent(store)}/${encodeURIComponent(docPath)}`);
+    const doc = await res.json();
+    document.getElementById('memory-docs').style.display = 'none';
+    const editor = document.getElementById('memory-editor');
+    editor.style.display = 'block';
+    document.getElementById('doc-name').textContent = `${store} / ${docPath}`;
+    document.getElementById('doc-content').value = doc.content;
+    document.getElementById('doc-meta').textContent =
+      `Version: ${doc.version} | SHA256: ${doc.sha256.slice(0, 16)}...`;
+  } catch (e) { console.error('Failed to load document:', e); }
+}
+
+document.getElementById('doc-save').addEventListener('click', async () => {
+  const content = document.getElementById('doc-content').value;
+  const metaEl = document.getElementById('doc-meta');
+  metaEl.textContent = 'Saving...';
+  try {
+    const res = await fetch(
+      `${API}/api/memory/${encodeURIComponent(currentStore)}/${encodeURIComponent(currentDocPath)}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }) }
+    );
+    const result = await res.json();
+    if (result.ok) {
+      metaEl.textContent = `Saved! Version: ${result.version} | SHA256: ${result.sha256.slice(0, 16)}...`;
+      metaEl.style.color = '#7bed9f';
+      setTimeout(() => { metaEl.style.color = '#666'; }, 2000);
+    } else {
+      metaEl.textContent = `Error: ${result.error}`;
+      metaEl.style.color = '#e94560';
+    }
+  } catch (e) {
+    metaEl.textContent = `Error: ${e.message}`;
+    metaEl.style.color = '#e94560';
+  }
+});
+
+document.getElementById('docs-back').addEventListener('click', () => {
+  document.getElementById('memory-docs').style.display = 'none';
+  document.getElementById('memory-stores').style.display = 'block';
+  document.querySelector('#memory-panel > p').style.display = '';
+  document.querySelector('#memory-panel > .section-title').style.display = '';
+});
+
+document.getElementById('editor-back').addEventListener('click', () => {
+  document.getElementById('memory-editor').style.display = 'none';
+  document.getElementById('memory-docs').style.display = 'block';
+});
+
+// ── Dreams Panel ──────────────────────────────────────────────
+document.getElementById('dream-run').addEventListener('click', async () => {
+  const btn = document.getElementById('dream-run');
+  btn.disabled = true;
+  btn.textContent = 'Dreaming...';
+  const progress = document.getElementById('dream-progress');
+  progress.style.display = 'block';
+  progress.textContent = 'Starting dream consolidation...';
+
+  try {
+    const res = await fetch(`${API}/api/dream`, { method: 'POST' });
+    const result = await res.json();
+    if (result.error) {
+      progress.textContent = `Error: ${result.error}`;
+    } else {
+      showDreamResult(result);
+      progress.style.display = 'none';
+    }
+  } catch (err) {
+    progress.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Dream Consolidation';
+  }
+});
+
+function showDreamResult(result) {
+  const el = document.getElementById('dream-result');
+  el.style.display = 'block';
+
+  document.getElementById('dream-stats').innerHTML = [
+    { label: 'Status', value: result.status },
+    { label: 'Transcripts', value: result.transcriptsProcessed },
+    { label: 'Memories Read', value: result.memoriesRead },
+    { label: 'Memories Written', value: result.memoriesWritten },
+    { label: 'Duration', value: (result.durationMs / 1000).toFixed(1) + 's' },
+  ].map(s => `
+    <span class="dream-stat">
+      <span class="dream-stat-label">${s.label}: </span>
+      <span class="dream-stat-value">${s.value}</span>
+    </span>
+  `).join('');
+
+  const insightsHtml = result.insights && result.insights.length > 0
+    ? '<div class="section-title" style="color:#e94560">Insights</div>' +
+      result.insights.map(i => `<div class="insight-item">${esc(i)}</div>`).join('')
+    : '<div class="section-title" style="color:#e94560">No insights extracted</div>';
+  document.getElementById('dream-insights').innerHTML = insightsHtml;
+
+  document.getElementById('dream-journal').innerHTML =
+    '<div class="section-title" style="color:#d4a5ff">Dream Journal</div>' +
+    `<pre class="dream-journal-pre">${esc(result.journalEntry)}</pre>`;
+
+  // Refresh memory stores (dream may have written to consolidated)
+  loadMemoryStores();
+}
+
+async function loadTraces() {
+  try {
+    const res = await fetch(`${API}/api/traces`);
+    const traces = await res.json();
+    const el = document.getElementById('traces-list');
+    if (traces.length === 0) {
+      el.innerHTML = '<div style="color:#666;font-size:12px">No session traces yet. Chat with the agent to generate traces.</div>';
+      return;
+    }
+    el.innerHTML = traces.map(t => `
+      <div class="trace-card">
+        <div class="trace-card-task">${esc(t.task.slice(0, 80))}${t.task.length > 80 ? '...' : ''}</div>
+        <div class="trace-card-meta">
+          ${t.outcome} | ${t.turns} turns | ${(t.durationMs / 1000).toFixed(1)}s |
+          Skills: ${t.skillsLoaded.join(', ') || 'none'} |
+          Memory: ${t.memoryReads}R/${t.memoryWrites}W |
+          ${new Date(t.timestamp).toLocaleString()}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error('Failed to load traces:', e); }
+}
+
+// ── Initial load ──────────────────────────────────────────────
+loadSkillsList();
+loadMemoryStores();
+loadTraces();
 </script>
 </body>
 </html>

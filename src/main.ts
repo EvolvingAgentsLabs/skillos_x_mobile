@@ -1,7 +1,7 @@
 // src/main.ts
 // Entry point for skillos_x_mobile.
 // Sets up MobileHAL, loads skills + memory stores, starts WebSocket + HTTP servers,
-// runs the agent, and saves session traces.
+// runs the agent, and saves session traces. Provides REST API for dashboard UI.
 
 import * as http from 'http';
 import * as fs from 'fs';
@@ -15,6 +15,7 @@ import { createBackend, BackendType } from './backend';
 import { loadSkills } from './skills';
 import { MemoryStore } from './memory';
 import { SessionTraceRecorder } from './session_trace';
+import { DreamEngine } from './dream';
 import { Agent } from './agent';
 import { createIOAdapter, WebSocketIOAdapter } from './io';
 
@@ -67,20 +68,10 @@ function broadcast(msg: WsMessage): void {
   }
 }
 
-// ── HTTP server (serve web UI) ─────────────────────────────────
+// ── HTTP server (created early, handler set in main) ──────────
 
 const uiHtmlPath = path.resolve(__dirname, '../sim/mobile_ui.html');
-const httpServer = http.createServer((_req, res) => {
-  fs.readFile(uiHtmlPath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('not found');
-      return;
-    }
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(data);
-  });
-});
+const httpServer = http.createServer();
 httpServer.listen(httpPort);
 
 // ── Main ───────────────────────────────────────────────────────
@@ -142,6 +133,195 @@ async function main() {
     maxTurns: 50,
     broadcast,
   });
+
+  // ── REST API + UI serving ─────────────────────────────────────
+
+  let dreamRunning = false;
+
+  const serveUI = (_req: http.IncomingMessage, res: http.ServerResponse) => {
+    fs.readFile(uiHtmlPath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+    });
+  };
+
+  const json = (res: http.ServerResponse, data: unknown, status = 200) => {
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+  };
+
+  const readBody = (req: http.IncomingMessage): Promise<string> => new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (c: Buffer) => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+  });
+
+  httpServer.on('request', async (req: http.IncomingMessage, res: http.ServerResponse) => {
+    const url = new URL(req.url || '/', `http://localhost:${httpPort}`);
+    const pathname = url.pathname;
+    const method = req.method || 'GET';
+
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+    try {
+      // ── GET / ── serve UI
+      if ((pathname === '/' || pathname === '/index.html') && method === 'GET') {
+        serveUI(req, res);
+        return;
+      }
+
+      // ── GET /api/skills ── list all skills
+      if (pathname === '/api/skills' && method === 'GET') {
+        json(res, skills.map(s => ({
+          name: s.meta.name,
+          description: s.meta.description,
+        })));
+        return;
+      }
+
+      // ── GET /api/skills/:name ── get skill body
+      const skillMatch = pathname.match(/^\/api\/skills\/([^/]+)$/);
+      if (skillMatch && method === 'GET') {
+        const name = decodeURIComponent(skillMatch[1]);
+        const skill = skills.find(s => s.meta.name === name);
+        if (!skill) { json(res, { error: 'Skill not found' }, 404); return; }
+        json(res, {
+          name: skill.meta.name,
+          description: skill.meta.description,
+          instructions: skill.instructions,
+        });
+        return;
+      }
+
+      // ── GET /api/memory ── list all stores
+      if (pathname === '/api/memory' && method === 'GET') {
+        const storeList = [];
+        for (const [, store] of memoryStores) {
+          const m = store.getManifest();
+          storeList.push({
+            name: m.name,
+            description: m.description,
+            access: m.access,
+            documents: store.list().length,
+          });
+        }
+        json(res, storeList);
+        return;
+      }
+
+      // ── GET /api/memory/:store ── list documents in store
+      const storeMatch = pathname.match(/^\/api\/memory\/([^/]+)$/);
+      if (storeMatch && method === 'GET') {
+        const storeName = decodeURIComponent(storeMatch[1]);
+        const store = memoryStores.get(storeName);
+        if (!store) { json(res, { error: 'Store not found' }, 404); return; }
+        json(res, {
+          name: storeName,
+          manifest: store.getManifest(),
+          documents: store.list(),
+        });
+        return;
+      }
+
+      // ── GET/POST /api/memory/:store/:path+ ── read or write document
+      const docMatch = pathname.match(/^\/api\/memory\/([^/]+)\/(.+)$/);
+      if (docMatch) {
+        const storeName = decodeURIComponent(docMatch[1]);
+        const docPath = decodeURIComponent(docMatch[2]);
+        const store = memoryStores.get(storeName);
+        if (!store) { json(res, { error: 'Store not found' }, 404); return; }
+
+        if (method === 'GET') {
+          const doc = store.read(docPath);
+          if (!doc) { json(res, { error: 'Document not found' }, 404); return; }
+          json(res, doc);
+          return;
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(req);
+          let parsed: { content?: string };
+          try { parsed = JSON.parse(body); } catch { json(res, { error: 'Invalid JSON' }, 400); return; }
+          if (!parsed.content) { json(res, { error: 'Missing content field' }, 400); return; }
+          const result = store.write(docPath, parsed.content);
+          json(res, result);
+          return;
+        }
+      }
+
+      // ── GET /api/traces ── list session traces
+      if (pathname === '/api/traces' && method === 'GET') {
+        const transcripts = SessionTraceRecorder.loadTranscripts(tracesDir, 50);
+        json(res, transcripts.map(t => ({
+          timestamp: t.meta.timestamp,
+          task: t.meta.task,
+          outcome: t.meta.outcome,
+          turns: t.meta.turns,
+          durationMs: t.meta.durationMs,
+          model: t.meta.model,
+          skillsLoaded: t.meta.skillsLoaded,
+          memoryReads: t.meta.memoryReads,
+          memoryWrites: t.meta.memoryWrites,
+          summary: t.summary,
+        })));
+        return;
+      }
+
+      // ── POST /api/dream ── trigger dream consolidation
+      if (pathname === '/api/dream' && method === 'POST') {
+        if (dreamRunning) {
+          json(res, { error: 'Dream consolidation is already running' }, 409);
+          return;
+        }
+
+        dreamRunning = true;
+        broadcast({ type: 'dream_progress', stage: 'starting', detail: 'Initializing dream engine...' });
+
+        try {
+          const dreamBackend = createBackend(backendType);
+          const engine = new DreamEngine(
+            {
+              memoryDir,
+              tracesDir,
+              outputStore: 'consolidated',
+              maxTranscripts: 100,
+            },
+            dreamBackend,
+          );
+
+          broadcast({ type: 'dream_progress', stage: 'consolidating', detail: 'Processing transcripts and memories...' });
+          const result = await engine.dream();
+          broadcast({ type: 'dream_complete', result });
+
+          // Reload memory stores to pick up new consolidated data
+          const newStores = MemoryStore.loadAll(memoryDir);
+          memoryStores.clear();
+          for (const [k, v] of newStores) memoryStores.set(k, v);
+
+          json(res, result);
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          json(res, { error: errMsg }, 500);
+        } finally {
+          dreamRunning = false;
+        }
+        return;
+      }
+
+      // ── Fallback: serve UI
+      serveUI(req, res);
+    } catch (err) {
+      console.error(`  [http] Error: ${err}`);
+      json(res, { error: 'Internal server error' }, 500);
+    }
+  });
+
+  console.log(`  [main] REST API ready at http://localhost:${httpPort}/api/`);
 
   // ── Run agent ─────────────────────────────────────────────────
 
