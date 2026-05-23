@@ -251,4 +251,7 @@ Apache 2.0
 
 ## Authors
 
+- [Ismael Faro](https://github.com/ismaelfaro)
+- [Matias Molinas](https://github.com/matiasmolinas)
+
 [EvolvingAgentsLabs](https://github.com/EvolvingAgentsLabs)
