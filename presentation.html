@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Cómo sueñan los agentes de IA? — CareCompanion</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  :root {
+    --bg:#0a0a0f;--bg-card:#12121a;--bg-card2:#1a1a28;
+    --text:#e8e8f0;--text-dim:#8888a0;--text-bright:#fff;
+    --skill:#00e5a0;--skill-bg:rgba(0,229,160,.08);--skill-bd:rgba(0,229,160,.25);
+    --mem:#4dabf7;--mem-bg:rgba(77,171,247,.08);--mem-bd:rgba(77,171,247,.25);
+    --dream:#b197fc;--dream-bg:rgba(177,151,252,.08);--dream-bd:rgba(177,151,252,.25);
+    --accent:#ff6b6b;--accent2:#ffd43b;--green:#51cf66;--orange:#ff922b;
+    --health:#ff8787;--health-bg:rgba(255,135,135,.08);--health-bd:rgba(255,135,135,.25);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;overflow:hidden;height:100vh;width:100vw}
+  .deck{width:100vw;height:100vh;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:60px 80px;opacity:0;transition:opacity .4s}
+  .slide.active{display:flex;opacity:1}
+  h1{font-size:3.2rem;font-weight:800;line-height:1.1;margin-bottom:24px;letter-spacing:-.02em}
+  h2{font-size:2.4rem;font-weight:700;line-height:1.15;margin-bottom:20px;letter-spacing:-.01em}
+  h3{font-size:1.4rem;font-weight:600;margin-bottom:12px}
+  p,li{font-size:1.25rem;line-height:1.6}
+  .subtitle{font-size:1.5rem;color:var(--text-dim);font-weight:400;margin-bottom:32px}
+  .big-number{font-size:5rem;font-weight:900;line-height:1}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .dim{color:var(--text-dim)}.bright{color:var(--text-bright)}
+  .skill-c{color:var(--skill)}.mem-c{color:var(--mem)}.dream-c{color:var(--dream)}
+  .accent-c{color:var(--accent)}.green-c{color:var(--green)}.yellow-c{color:var(--accent2)}.orange-c{color:var(--orange)}.health-c{color:var(--health)}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;margin-top:24px}
+  .grid-4{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+  .card{background:var(--bg-card);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:32px}
+  .card-skill{background:var(--skill-bg);border-color:var(--skill-bd)}
+  .card-mem{background:var(--mem-bg);border-color:var(--mem-bd)}
+  .card-dream{background:var(--dream-bg);border-color:var(--dream-bd)}
+  .card-health{background:var(--health-bg);border-color:var(--health-bd)}
+  .card h3{margin-bottom:16px}
+  .card ul{list-style:none;padding:0}
+  .card ul li{padding:4px 0;font-size:1.1rem}
+  .card ul li::before{content:'> ';color:var(--text-dim)}
+  .tag{display:inline-block;padding:4px 14px;border-radius:100px;font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .tag-skill{background:var(--skill-bg);color:var(--skill);border:1px solid var(--skill-bd)}
+  .tag-mem{background:var(--mem-bg);color:var(--mem);border:1px solid var(--mem-bd)}
+  .tag-dream{background:var(--dream-bg);color:var(--dream);border:1px solid var(--dream-bd)}
+  .tag-health{background:var(--health-bg);color:var(--health);border:1px solid var(--health-bd)}
+  .code-block{background:#0d0d15;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 28px;font-family:'JetBrains Mono',monospace;font-size:.95rem;line-height:1.7;overflow-x:auto;margin:16px 0;white-space:pre}
+  .code-block .comment{color:#5c6370}.code-block .kw{color:var(--dream)}.code-block .str{color:var(--skill)}.code-block .fn{color:var(--mem)}.code-block .res{color:var(--accent2)}.code-block .err{color:var(--accent)}
+  .highlight-box{background:rgba(255,255,255,.03);border-left:4px solid var(--accent2);padding:20px 28px;border-radius:0 12px 12px 0;margin:20px 0;font-size:1.2rem;font-style:italic;color:var(--accent2)}
+  .file-tree{font-family:'JetBrains Mono',monospace;font-size:1rem;line-height:1.8;background:#0d0d15;border-radius:12px;padding:24px 28px;border:1px solid rgba(255,255,255,.06)}
+  .file-tree .folder{color:var(--mem)}.file-tree .file{color:var(--text)}.file-tree .desc{color:var(--text-dim);font-size:.85rem}
+  .compare-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:1.05rem}
+  .compare-table th{text-align:left;padding:12px 16px;font-weight:600;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.1);font-size:.95rem;text-transform:uppercase;letter-spacing:.04em}
+  .compare-table td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+  .compare-table .label{color:var(--text-dim);font-weight:500;width:180px}
+  .slide-title{justify-content:center;align-items:center;text-align:center}
+  .slide-title h1{font-size:4rem;background:linear-gradient(135deg,var(--health),var(--mem),var(--dream));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+  .slide-title .meta{margin-top:48px;color:var(--text-dim);font-size:1.1rem;line-height:1.8}
+  .slide-title .meta strong{color:var(--text)}
+  .nav-bar{position:fixed;bottom:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(10,10,15,.9);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.05);z-index:100}
+  .nav-bar .progress{height:3px;background:rgba(255,255,255,.06);border-radius:2px;flex:1;margin:0 24px;position:relative}
+  .nav-bar .progress-fill{height:100%;background:linear-gradient(90deg,var(--health),var(--mem),var(--dream));border-radius:2px;transition:width .3s}
+  .nav-bar .slide-num{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--text-dim);min-width:80px}
+  .nav-bar .slide-num:last-child{text-align:right}
+  .chat-bubble{border-radius:16px;padding:16px 20px;margin:6px 0;max-width:85%;font-size:1.05rem;line-height:1.5}
+  .chat-user{background:#1a3a1a;border:1px solid rgba(81,207,102,.2);margin-left:auto;text-align:right;color:#c8f0c8}
+  .chat-agent{background:var(--bg-card2);border:1px solid rgba(255,255,255,.08);color:var(--text)}
+  .chat-tool{background:rgba(77,171,247,.06);border:1px solid var(--mem-bd);font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--mem)}
+  .insight-card{background:var(--bg-card);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:16px 20px;margin:8px 0}
+  .insight-card.warn{border-color:var(--accent)}
+  .insight-card.trend{border-color:var(--green)}
+  .insight-card.pattern{border-color:var(--dream)}
+  @media(max-width:1200px){.slide{padding:40px 50px}h1{font-size:2.4rem}h2{font-size:1.8rem}p,li{font-size:1.05rem}.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- SLIDE 1 — TITLE -->
+<div class="slide slide-title active" data-slide="1">
+  <div>
+    <p class="subtitle" style="font-size:1.2rem;margin-bottom:12px;">28 de Mayo, 2026 &mdash; Wonder Works Cowork, Punta del Este</p>
+    <h1>¿Cómo sueñan los agentes<br>de inteligencia artificial?</h1>
+    <p class="subtitle">CareCompanion &mdash; Un asistente de bienestar que aprende, recuerda y evoluciona</p>
+    <div class="meta">
+      <strong>Matias Molinas</strong> &mdash; CTO, Histora<br>
+      Invitado especial: <strong>Ismael Faro</strong> &mdash; VP of AI, IBM<br>
+      <span style="margin-top:8px;display:inline-block;">Gemma 4 Good Hackathon &mdash; Health &amp; Sciences Track</span>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2 — THE PROBLEM -->
+<div class="slide" data-slide="2">
+  <h2>Un problema de <span class="health-c">$300 mil millones</span></h2>
+  <div class="grid-2" style="margin-top:28px;">
+    <div>
+      <div style="margin-bottom:32px;">
+        <div class="big-number health-c" style="font-size:4rem;">125,000</div>
+        <p style="font-size:1.2rem;">muertes prevenibles por año en EE.UU.</p>
+        <p class="dim" style="font-size:1rem;">por falta de adherencia a medicación</p>
+      </div>
+      <div>
+        <div class="big-number accent-c" style="font-size:4rem;">$300B</div>
+        <p style="font-size:1.2rem;">costo anual de no-adherencia</p>
+        <p class="dim" style="font-size:1rem;">hospitalizaciones evitables, complicaciones</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;">
+      <div class="card card-health">
+        <h3>Maria, 72 años</h3>
+        <ul>
+          <li>Diabetes tipo 2, hipertensión</li>
+          <li>Osteoartritis bilateral de rodillas</li>
+          <li>4 medicamentos, 2 tomas diarias</li>
+          <li>Vive sola, hija y hijo en otra ciudad</li>
+          <li>Pierde el Metformin de la noche 3 de 7 días</li>
+        </ul>
+      </div>
+      <div class="highlight-box" style="margin-top:16px;border-color:var(--health);color:var(--health);">
+        Necesita un compañero activo, no un dispensador de pastillas.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3 — THE SOLUTION -->
+<div class="slide" data-slide="3">
+  <h2>CareCompanion &mdash; Tres primitivas para el cuidado</h2>
+  <div class="grid-3" style="margin-top:28px;">
+    <div class="card card-skill">
+      <span class="tag tag-skill">Skills</span>
+      <h3 class="skill-c" style="margin-top:16px;">Habilidades de cuidado</h3>
+      <p style="font-size:1.05rem;">Medicación, ejercicio, bienestar social, rutina diaria.</p>
+      <p style="margin-top:12px;font-size:.9rem;" class="dim">Progressive disclosure &mdash; carga solo lo necesario</p>
+    </div>
+    <div class="card card-mem">
+      <span class="tag tag-mem">Memory</span>
+      <h3 class="mem-c" style="margin-top:16px;">Historial de salud</h3>
+      <p style="font-size:1.05rem;">Medicamentos, ejercicios, contactos, logs diarios.</p>
+      <p style="margin-top:12px;font-size:.9rem;" class="dim">Versionado SHA256 &mdash; auditable por médicos</p>
+    </div>
+    <div class="card card-dream">
+      <span class="tag tag-dream">Dreams</span>
+      <h3 class="dream-c" style="margin-top:16px;">Insights clínicos</h3>
+      <p style="font-size:1.05rem;">Detecta patrones que conectan comportamiento con salud.</p>
+      <p style="margin-top:12px;font-size:.9rem;" class="dim">Multi-hop reasoning offline</p>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:28px;border-color:var(--text-dim);">
+    Mismas primitivas que Anthropic usa en Claude Code &mdash; implementadas con <span class="mono bright">Gemma 4</span> open-weight.
+  </div>
+</div>
+
+<!-- SLIDE 4 — SKILLS -->
+<div class="slide" data-slide="4">
+  <span class="tag tag-skill" style="margin-bottom:20px;">Skills</span>
+  <h2>4 habilidades de cuidado</h2>
+  <div class="grid-4" style="margin-top:20px;">
+    <div class="card card-skill">
+      <h3>&#128138; medication-reminder</h3>
+      <ul>
+        <li>Verifica horario de medicación</li>
+        <li>Recuerda dosis pendientes</li>
+        <li>Registra adherencia en memoria</li>
+        <li>Configura alarmas para próxima toma</li>
+      </ul>
+    </div>
+    <div class="card card-skill">
+      <h3>&#127947; exercise-coaching</h3>
+      <ul>
+        <li>Rutina personalizada (sentada)</li>
+        <li>Lee restricciones de movilidad</li>
+        <li>Adapta según dolor/fatiga</li>
+        <li>Muestra checklist interactivo</li>
+      </ul>
+    </div>
+    <div class="card card-skill">
+      <h3>&#128149; social-checkin</h3>
+      <ul>
+        <li>Evalúa estado emocional</li>
+        <li>Facilita llamadas a familia</li>
+        <li>Registra patrones de ánimo</li>
+        <li>Identifica soledad</li>
+      </ul>
+    </div>
+    <div class="card card-skill">
+      <h3>&#128197; daily-routine</h3>
+      <ul>
+        <li>Orquestador por hora del día</li>
+        <li>Mañana: medicación + calendario</li>
+        <li>Mediodía: ejercicio + social</li>
+        <li>Noche: resumen + prep mañana</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block" style="font-size:.95rem;margin-top:20px;"><span class="comment">// El agente ve solo la tabla resumen. Carga instrucciones completas on-demand:</span>
+Turn 2: <span class="fn">load_skill</span>(<span class="str">"medication-reminder"</span>)
+    &rarr; 35 líneas de protocolo: verificar horario, hablar, escuchar, registrar, alarmar</div>
+</div>
+
+<!-- SLIDE 5 — MEMORY -->
+<div class="slide" data-slide="5">
+  <span class="tag tag-mem" style="margin-bottom:20px;">Memory</span>
+  <h2>Memoria de salud persistente</h2>
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="file-tree" style="font-size:.9rem;"><span class="folder">memory/</span>
+<span class="folder">├── health-profile/</span>
+<span class="file">│   ├── medications.md</span>     <span class="desc">Lisinopril, Metformin, VitD3, Aspirin</span>
+<span class="file">│   ├── exercise.md</span>        <span class="desc">Sentada, osteoartritis bilateral</span>
+<span class="file">│   ├── social.md</span>          <span class="desc">Sofia (hija), Miguel (hijo)</span>
+<span class="file">│   └── health-profile.md</span>  <span class="desc">Maria, 72 años, condiciones</span>
+<span class="folder">├── daily-log/</span>
+<span class="file">│   ├── 2026-05-10.md</span>      <span class="desc">Sesión 1: cold start</span>
+<span class="file">│   ├── 2026-05-11.md</span>      <span class="desc">Sesión 2: primeros patterns</span>
+<span class="file">│   ├── ...</span>
+<span class="file">│   └── 2026-05-17.md</span>      <span class="desc">Sesión 9: rich context</span>
+<span class="folder">└── consolidated/</span>            <span class="desc">← creado por Dreams</span>
+    <span class="file">├── user-profile.md</span>
+    <span class="file">└── _dream_journal.md</span></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3 class="dim" style="font-size:.9rem;text-transform:uppercase;">medications.md (ejemplo)</h3>
+        <div class="code-block" style="font-size:.85rem;margin-top:8px;"><span class="str"># Medications
+
+## Morning (with breakfast, ~8am)
+- Lisinopril 10mg — blood pressure
+- Metformin 500mg — diabetes
+- Vitamin D3 2000 IU — deficiency
+
+## Evening (with dinner, ~7pm)
+- Metformin 500mg — diabetes
+- Aspirin 81mg — cardiovascular
+
+## Notes
+- Evening Metformin missed 3 of 7 days
+- Vitamin D3 supply running low
+- Lab: 22 ng/mL (target >30)</span></div>
+      </div>
+      <p style="font-size:1rem;" class="dim">Cada escritura genera SHA256 + versión. Auditable por profesionales de salud.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — MEMORY IN ACTION -->
+<div class="slide" data-slide="6">
+  <span class="tag tag-mem" style="margin-bottom:20px;">Memory &mdash; En acción</span>
+  <h2>9 sesiones, 7 días &mdash; la memoria <span class="mem-c">crece</span></h2>
+  <div class="grid-2" style="margin-top:20px;">
+    <div class="card" style="border-top:3px solid var(--accent);">
+      <h3><span class="accent-c">Sesión 1</span> &mdash; 10 de mayo</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+        <div class="chat-agent">Buenos días Maria. Soy tu CareCompanion. Es hora de tus medicamentos de la mañana.</div>
+        <div class="chat-tool">read_memory("health-profile", "medications.md")</div>
+        <div class="chat-agent">Tienes pendiente: Lisinopril 10mg, Metformin 500mg y Vitamina D3.</div>
+        <div class="chat-user">Tomé el Lisinopril y el Metformin.</div>
+        <div class="chat-tool">write_memory("daily-log", "2026-05-10.md", "...")</div>
+        <div class="chat-agent" style="font-size:.9rem;" class="dim">Registra: VitD3 no tomada. Patrón emergente.</div>
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green);">
+      <h3><span class="green-c">Sesión 9</span> &mdash; 17 de mayo</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+        <div class="chat-tool">read_memory("daily-log", "2026-05-16.md")<br>read_memory("health-profile", "medications.md")</div>
+        <div class="chat-agent">Buenos días Maria. Ayer no tomaste el Metformin de la noche. Es importante para tu diabetes.</div>
+        <div class="chat-user">Me olvidé, estaba triste anoche.</div>
+        <div class="chat-agent">Entiendo. Noto que los días que no hablas con Sofia, el ánimo baja. ¿Querés que te recuerde llamarla hoy a las 3?</div>
+        <div class="chat-agent" style="font-size:.85rem;color:var(--dream)">Conecta: soledad &rarr; ánimo &rarr; adherencia</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 — DREAMS -->
+<div class="slide" data-slide="7">
+  <span class="tag tag-dream" style="margin-bottom:20px;">Dreams</span>
+  <h2>El agente <span class="dream-c">duerme</span> y descubre insights clínicos</h2>
+  <div class="grid-2" style="margin-top:20px;">
+    <div>
+      <h3 class="dim" style="font-size:.9rem;text-transform:uppercase;">Input: 9 sesiones + memoria</h3>
+      <div class="card" style="margin-top:8px;">
+        <p>&#128196; health-profile (4 docs)</p>
+        <p>&#128220; daily-log (9 sesiones)</p>
+        <p>&#128209; Session transcripts (cada tool call)</p>
+        <p style="margin-top:12px;" class="dim">Total: ~15,000 tokens de contexto clínico</p>
+      </div>
+      <h3 class="dim" style="font-size:.9rem;text-transform:uppercase;margin-top:20px;">Proceso</h3>
+      <div class="card" style="margin-top:8px;">
+        <p><span class="dream-c">Gemma 4 26B-A4B</span> analiza cross-session</p>
+        <p class="dim" style="font-size:.9rem;margin-top:8px;">Deduplicación + reorganización + multi-hop reasoning</p>
+      </div>
+    </div>
+    <div>
+      <h3 class="dim" style="font-size:.9rem;text-transform:uppercase;">Output: 4 insights clínicos</h3>
+      <div class="insight-card warn">
+        <p style="font-size:.95rem;"><span class="accent-c" style="font-weight:700;">CONCERNING</span> &mdash; Vitamin D3 perdida 4 de 7 días</p>
+        <p class="dim" style="font-size:.85rem;">Lab: 22 ng/mL (target &gt;30). Necesita recarga.</p>
+      </div>
+      <div class="insight-card warn">
+        <p style="font-size:.95rem;"><span class="accent-c" style="font-weight:700;">CONCERNING</span> &mdash; Metformin nocturno: 3 de 7 perdido</p>
+        <p class="dim" style="font-size:.85rem;">Correlaciona con bajo ánimo reportado.</p>
+      </div>
+      <div class="insight-card trend">
+        <p style="font-size:.95rem;"><span class="green-c" style="font-weight:700;">TREND</span> &mdash; Arm circles: 8 &rarr; 10 repeticiones</p>
+        <p class="dim" style="font-size:.85rem;">Progreso físico a pesar de osteoartritis. Reforzar.</p>
+      </div>
+      <div class="insight-card pattern">
+        <p style="font-size:.95rem;"><span class="dream-c" style="font-weight:700;">PATTERN</span> &mdash; Soledad 2-5 PM &rarr; medicación nocturna</p>
+        <p class="dim" style="font-size:.85rem;">Aislamiento social predice no-adherencia. Multi-hop.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 — MULTI-HOP REASONING -->
+<div class="slide" data-slide="8">
+  <span class="tag tag-dream" style="margin-bottom:20px;">Dreams &mdash; Multi-hop reasoning</span>
+  <h2>El descubrimiento que un médico tardaría <span class="dream-c">semanas</span> en ver</h2>
+  <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:40px;flex-wrap:wrap;">
+    <div class="card" style="text-align:center;padding:24px 32px;min-width:200px;">
+      <p style="font-size:2rem;">&#128546;</p>
+      <h3 class="health-c">Soledad</h3>
+      <p class="dim" style="font-size:.9rem;">2-5 PM, consistente</p>
+      <p class="dim" style="font-size:.85rem;">No habla con nadie</p>
+    </div>
+    <div style="font-size:2rem;color:var(--text-dim);">&rarr;</div>
+    <div class="card" style="text-align:center;padding:24px 32px;min-width:200px;">
+      <p style="font-size:2rem;">&#128532;</p>
+      <h3 class="orange-c">Bajo ánimo</h3>
+      <p class="dim" style="font-size:.9rem;">Reportado en sesiones</p>
+      <p class="dim" style="font-size:.85rem;">"Estaba triste anoche"</p>
+    </div>
+    <div style="font-size:2rem;color:var(--text-dim);">&rarr;</div>
+    <div class="card" style="text-align:center;padding:24px 32px;min-width:200px;">
+      <p style="font-size:2rem;">&#128138;</p>
+      <h3 class="accent-c">Metformin perdido</h3>
+      <p class="dim" style="font-size:.9rem;">3 de 7 noches</p>
+      <p class="dim" style="font-size:.85rem;">Correlación directa</p>
+    </div>
+    <div style="font-size:2rem;color:var(--text-dim);">&rarr;</div>
+    <div class="card" style="text-align:center;padding:24px 32px;min-width:200px;border:2px solid var(--accent);">
+      <p style="font-size:2rem;">&#9888;&#65039;</p>
+      <h3 class="accent-c">Riesgo diabético</h3>
+      <p class="dim" style="font-size:.9rem;">Glucosa no controlada</p>
+      <p class="dim" style="font-size:.85rem;">Hospitalización evitable</p>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:32px;border-color:var(--dream);color:var(--dream);">
+    La intervención: programar la llamada de Sofia a las 3 PM.<br>Social &rarr; Ánimo &rarr; Adherencia &rarr; Control glucémico.
+  </div>
+</div>
+
+<!-- SLIDE 9 — ARCHITECTURE -->
+<div class="slide" data-slide="9">
+  <h2>Arquitectura &mdash; <span class="dim">Gemma 4 + 15 herramientas</span></h2>
+  <div class="grid-2" style="margin-top:16px;">
+    <div>
+      <div class="code-block" style="font-size:.85rem;"><span class="comment">// 15 herramientas — misma interfaz</span>
+
+<span class="dim">// Mobile HAL (10 phone-native)</span>
+<span class="fn">get_current_time</span>()        <span class="fn">send_notification</span>(title, body)
+<span class="fn">set_alarm</span>(time, label)    <span class="fn">get_alarms</span>()
+<span class="fn">cancel_alarm</span>(id)          <span class="fn">get_calendar_events</span>(date?)
+<span class="fn">show_checklist</span>(items)     <span class="fn">update_checklist</span>(index, done)
+<span class="fn">speak</span>(text)               <span class="fn">listen</span>()
+
+<span class="dim">// Skill — Progressive Disclosure</span>
+<span class="fn">load_skill</span>(name)
+
+<span class="dim">// Memory — Cross-session persistence</span>
+<span class="fn">read_memory</span>(store, path)
+<span class="fn">write_memory</span>(store, path, content)
+<span class="fn">list_memories</span>(store?)
+<span class="fn">delete_memory</span>(store, path)</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="text-align:center;padding:16px;">
+        <p class="dim" style="font-size:.8rem;text-transform:uppercase;">Modelo principal</p>
+        <p class="yellow-c" style="font-size:1.3rem;font-weight:700;">Gemma 4 26B-A4B</p>
+        <p class="dim" style="font-size:.85rem;">Open-weight, via OpenRouter</p>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <p class="dim" style="font-size:.8rem;text-transform:uppercase;">Backends alternativos</p>
+        <p style="font-size:1.1rem;font-weight:600;">Gemini 2.5 Flash &bull; Claude Sonnet 4</p>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <p class="dim" style="font-size:.8rem;text-transform:uppercase;">Skills / Memory Stores</p>
+        <p style="font-size:1.3rem;font-weight:700;">4 skills &bull; 3 stores</p>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <p class="dim" style="font-size:.8rem;text-transform:uppercase;">UI</p>
+        <p style="font-size:1.1rem;font-weight:600;">Web chat tipo móvil</p>
+        <p class="dim" style="font-size:.85rem;">Notificaciones, alarmas, checklists</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 — DEMO COMPARISON -->
+<div class="slide" data-slide="10">
+  <h2>Sesión 1 vs Sesión 9 &mdash; <span class="green-c">Evolución visible</span></h2>
+  <table class="compare-table" style="margin-top:24px;">
+    <tr>
+      <th style="width:180px;"></th>
+      <th style="color:var(--accent);">Sesión 1 (cold)</th>
+      <th style="color:var(--green);">Sesión 9 (con memoria)</th>
+    </tr>
+    <tr>
+      <td class="label">Greeting</td>
+      <td>"Soy tu CareCompanion. Es hora de tus medicamentos."</td>
+      <td>"Buenos días Maria. Ayer no tomaste el Metformin." <span class="green-c">&larr; proactivo</span></td>
+    </tr>
+    <tr>
+      <td class="label">Medicación</td>
+      <td>Lista genérica de 3 pastillas</td>
+      <td>Prioriza las que se pierden (VitD3, Metformin PM) <span class="green-c">&larr; adaptive</span></td>
+    </tr>
+    <tr>
+      <td class="label">Ejercicio</td>
+      <td>Rutina estándar de 7 ejercicios</td>
+      <td>Ajustada por dolor de rodillas reportado <span class="green-c">&larr; personalizada</span></td>
+    </tr>
+    <tr>
+      <td class="label">Social</td>
+      <td>No intenta interacción social</td>
+      <td>"¿Querés llamar a Sofia hoy a las 3?" <span class="green-c">&larr; preventiva</span></td>
+    </tr>
+    <tr>
+      <td class="label">Insights</td>
+      <td>Ninguno &mdash; no hay historial</td>
+      <td>Soledad &rarr; ánimo &rarr; no-adherencia <span class="dream-c">&larr; multi-hop</span></td>
+    </tr>
+  </table>
+  <div class="highlight-box" style="margin-top:24px;border-color:var(--green);color:var(--green);">
+    De dispensador de pastillas a compañero de salud que entiende el contexto completo.
+  </div>
+</div>
+
+<!-- SLIDE 11 — SAME ARCHITECTURE -->
+<div class="slide" data-slide="11">
+  <h2>Misma arquitectura, diferente <span class="bright">dominio</span></h2>
+  <table class="compare-table" style="margin-top:24px;">
+    <tr>
+      <th></th>
+      <th>&#129302; RoClaw (Robot)</th>
+      <th>&#128138; CareCompanion (Mobile)</th>
+    </tr>
+    <tr>
+      <td class="label">Dominio</td>
+      <td>Patrullaje de instalaciones</td>
+      <td>Bienestar de pacientes</td>
+    </tr>
+    <tr>
+      <td class="label">HAL</td>
+      <td>move, rotate, observe</td>
+      <td>notifications, alarms, checklist</td>
+    </tr>
+    <tr>
+      <td class="label">Skills</td>
+      <td>3 (patrol, inspection, interaction)</td>
+      <td>4 (medication, exercise, social, routine)</td>
+    </tr>
+    <tr>
+      <td class="label">Memory</td>
+      <td>patrol-log, preferences</td>
+      <td>health-profile, daily-log</td>
+    </tr>
+    <tr>
+      <td class="label">Dream insight</td>
+      <td>"Emergency exit fue cerrada"</td>
+      <td>"Soledad &rarr; ánimo &rarr; medicación"</td>
+    </tr>
+    <tr>
+      <td class="label">Modelo</td>
+      <td>Gemini 2.5 Flash</td>
+      <td>Gemma 4 26B-A4B</td>
+    </tr>
+    <tr>
+      <td class="label">Interface</td>
+      <td style="color:var(--skill);font-weight:600;">Tool calls</td>
+      <td style="color:var(--skill);font-weight:600;">Tool calls</td>
+    </tr>
+  </table>
+  <div class="highlight-box" style="margin-top:24px;border-color:var(--text-dim);">
+    Skills + Memory + Dreams son primitivas <strong>domain-agnostic</strong>. Cambiás el HAL y los skills, la arquitectura es idéntica.
+  </div>
+</div>
+
+<!-- SLIDE 12 — OPEN WEIGHT -->
+<div class="slide" data-slide="12">
+  <h2>Open-weight &mdash; Sin vendor lock-in</h2>
+  <div class="grid-3" style="margin-top:28px;">
+    <div class="card" style="text-align:center;">
+      <p style="font-size:3rem;">&#129309;</p>
+      <h3>Gemma 4</h3>
+      <p style="font-size:1rem;">Open-weight, 26B params</p>
+      <p class="dim" style="font-size:.9rem;margin-top:8px;">MoE: 4B activos. Corre local en GPU decente.</p>
+      <p style="margin-top:12px;font-size:.9rem;"><span class="green-c">&#10003;</span> Function calling nativo</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Multi-turn conversations</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Razonamiento clínico</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <p style="font-size:3rem;">&#9889;</p>
+      <h3>Gemini 2.5 Flash</h3>
+      <p style="font-size:1rem;">Cloud, ultra-rápido</p>
+      <p class="dim" style="font-size:.9rem;margin-top:8px;">12s por sesión vs 34s con Gemma 4</p>
+      <p style="margin-top:12px;font-size:.9rem;"><span class="green-c">&#10003;</span> Fallback de producción</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Misma interfaz</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Sin cambios de código</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <p style="font-size:3rem;">&#128218;</p>
+      <h3>Claude Sonnet 4</h3>
+      <p style="font-size:1rem;">Referencia Anthropic</p>
+      <p class="dim" style="font-size:.9rem;margin-top:8px;">Backend de validación</p>
+      <p style="margin-top:12px;font-size:.9rem;"><span class="green-c">&#10003;</span> Comparación directa</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Same tool interface</p>
+      <p style="font-size:.9rem;"><span class="green-c">&#10003;</span> Backend swap = 1 flag</p>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:24px;border-color:var(--accent2);">
+    <span class="mono">npm run start:gemma4</span> &ensp;|&ensp; <span class="mono">npm run start:gemini</span> &ensp;|&ensp; <span class="mono">npm run start:anthropic</span><br>
+    Mismo código, 3 backends, un flag.
+  </div>
+</div>
+
+<!-- SLIDE 13 — HACKATHON -->
+<div class="slide" data-slide="13">
+  <h2>Gemma 4 Good Hackathon &mdash; <span class="health-c">Health &amp; Sciences</span></h2>
+  <div class="grid-2" style="margin-top:24px;">
+    <div>
+      <h3 style="margin-bottom:16px;">Contribución técnica</h3>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card" style="padding:16px 20px;">
+          <p><span class="skill-c" style="font-weight:700;">1.</span> Skills como Progressive Disclosure para modelos open-weight</p>
+        </div>
+        <div class="card" style="padding:16px 20px;">
+          <p><span class="mem-c" style="font-weight:700;">2.</span> Memory con SHA256 versioning para datos de salud auditables</p>
+        </div>
+        <div class="card" style="padding:16px 20px;">
+          <p><span class="dream-c" style="font-weight:700;">3.</span> Dream Engine: consolidación offline que descubre insights clínicos multi-hop</p>
+        </div>
+        <div class="card" style="padding:16px 20px;">
+          <p><span class="yellow-c" style="font-weight:700;">4.</span> Prueba de que Gemma 4 puede replicar los managed agents de Anthropic</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:16px;">Impacto en salud</h3>
+      <div class="card card-health">
+        <ul style="font-size:1.05rem;">
+          <li>Adherencia a medicación mejorada por contexto</li>
+          <li>Detección temprana de patrones de riesgo</li>
+          <li>Intervención social preventiva (soledad &rarr; adherencia)</li>
+          <li>Ejercicio adaptativo para movilidad reducida</li>
+          <li>Historial auditable para médicos</li>
+          <li>Corre con modelos open-weight &mdash; privacidad del paciente</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 — CLOSING -->
+<div class="slide slide-title" data-slide="14">
+  <div>
+    <h1 style="font-size:3rem;">¿Preguntas?</h1>
+    <p class="subtitle" style="max-width:750px;margin:24px auto 0;">
+      Un modelo open-weight de 26B parámetros puede descubrir que la soledad de una paciente predice su falta de adherencia a la medicación &mdash; conectando 3 dominios a través de 9 sesiones.
+    </p>
+    <div style="margin-top:40px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap;">
+      <div class="card" style="padding:16px 28px;">
+        <p class="dim" style="font-size:.85rem;">GitHub</p>
+        <p class="mono" style="font-size:.95rem;">github.com/EvolvingAgentsLabs/skillos_x_mobile</p>
+      </div>
+      <div class="card" style="padding:16px 28px;">
+        <p class="dim" style="font-size:.85rem;">Hackathon</p>
+        <p class="mono" style="font-size:.95rem;">Gemma 4 Good &mdash; Health &amp; Sciences</p>
+      </div>
+    </div>
+    <div class="meta" style="margin-top:36px;">
+      <strong>Matias Molinas</strong> &mdash; CTO, Histora &ensp;|&ensp;
+      <strong>Ismael Faro</strong> &mdash; VP of AI, IBM<br>
+      <strong>Pablo Ramos</strong> &mdash; Co-organizador &ensp;|&ensp;
+      <strong>Wonder Works Cowork</strong>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav-bar">
+  <span class="slide-num" id="slideNum">1 / 14</span>
+  <div class="progress"><div class="progress-fill" id="progressFill" style="width:7%"></div></div>
+  <span class="slide-num dim" style="font-size:.8rem;">&#8592; &#8594; o click</span>
+</div>
+
+<script>
+(function(){
+  const deck=document.getElementById('deck'),slides=deck.querySelectorAll('.slide'),total=slides.length;
+  let cur=0;
+  function go(n){if(n<0||n>=total)return;slides[cur].classList.remove('active');cur=n;slides[cur].classList.add('active');document.getElementById('slideNum').textContent=`${cur+1} / ${total}`;document.getElementById('progressFill').style.width=`${((cur+1)/total)*100}%`}
+  function next(){go(cur+1)}function prev(){go(cur-1)}
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();prev()}else if(e.key==='Home')go(0);else if(e.key==='End')go(total-1);else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}});
+  deck.addEventListener('click',e=>{if(e.target.closest('.nav-bar'))return;e.clientX<window.innerWidth/3?prev():next()});
+  let tx=0;deck.addEventListener('touchstart',e=>{tx=e.touches[0].clientX});deck.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50){dx<0?next():prev()}});
+  go(0);
+})();
+</script>
+</body>
+</html>
