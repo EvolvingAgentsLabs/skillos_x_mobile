@@ -71,7 +71,42 @@ Roughly 6–8 minutes per session on an M-series Mac. The trace lands in `traces
 
 To reproduce the 26B arm, drop `OPENROUTER_BASE_URL`, set a real `OPENROUTER_API_KEY`, and `AGENT_MODEL=google/gemma-4-26b-a4b-it`. Expect to run it several times — that is the point.
 
-## The forced-call arm: implemented, blocked, not run
+## The forced-call arm: it works, and that is the problem
+
+Run 2026-07-24 against `gemma-4-31b-it` on Google AI Studio, which does honour
+`tool_choice`. Three sessions per arm, identical task string.
+
+| Arm | Session | Turns | Skills loaded | Memory reads |
+|---|---:|---:|---:|---:|
+| auto | 1 | 7 | 2 | 4 |
+| auto | 2 | 1 | 0 | 0 |
+| auto | 3 | 1 | 0 | 0 |
+| **forced** | 1 | 2 | **4** | **0** |
+| **forced** | 2 | 2 | **4** | **0** |
+| **forced** | 3 | 2 | **4** | **0** |
+
+Forcing the turn-1 call does exactly what it promises: **3/3 sessions load skills,
+against 1/3 discretionary.** The sampling variance is gone.
+
+**And the sessions are worse.** Every forced run halts after two turns having read
+nothing and done nothing. The trace shows the model emitting `load_skill` over and
+over — eight or more calls, including repeats of the same skill — consuming both turns
+loading and never proceeding to the task. Removing the choice about *whether* to load a
+skill appears to also remove the judgement about *when to stop loading*.
+
+The only session that did real work is auto #1: seven turns, two skills, four memory
+reads. It is also the only one that both loaded skills and then used them.
+
+**So neither arm is the answer.** Discretionary loading is a coin flip, and two of the
+three auto sessions did nothing at all — a single prose turn, worse than the local 12B,
+which at least kept moving. Forced loading is reliable and inert. Skill loading
+correlates with a productive session; *causing* it does not produce one.
+
+What this rules out: "just force the call" as a fix. What it points at: forcing the call
+**once**, with the tool removed or the choice released immediately afterwards, so the
+model cannot spend the session in a loading loop. That variant has not been run.
+
+### Earlier note, kept for the record
 
 The conclusion above says to stop leaving turn 1 to sampling. That arm is now
 implemented — `FORCE_SKILL_LOAD=1` passes
