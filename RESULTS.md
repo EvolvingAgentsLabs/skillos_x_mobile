@@ -6,12 +6,13 @@ The design uses Anthropic-style progressive disclosure — the system prompt lis
 
 Across every recorded session in `traces/`, by model:
 
-| Model | Sessions | Loaded ≥1 skill | Rate |
-|---|---:|---:|---:|
-| `claude-sonnet-4-20250514` | 1 | 1 | 1/1 |
-| `google/gemini-2.5-flash` | 1 | 1 | 1/1 |
-| **`google/gemma-4-26b-a4b-it`** | **7** | **1** | **1/7** |
-| `gemma4:12b` (local, ollama) | 3 | 0 | 0/3 |
+| Model | Arm | Sessions | Loaded ≥1 skill |
+|---|---|---:|---:|
+| `claude-sonnet-4-20250514` | baseline | 1 | 1 |
+| `google/gemini-2.5-flash` | baseline | 1 | 1 |
+| **`google/gemma-4-26b-a4b-it`** | baseline | **7** | **1** |
+| `gemma4:12b` (local, ollama) | baseline | 2 | 0 |
+| `gemma4:12b` (local, ollama) | instruction in task text | 1 | 1 |
 
 **The Gemma 26B result is the finding.** All seven sessions ran the *identical* task string. The one that loaded skills (2026-05-13, 19 turns, `["daily-routine", "medication-reminder"]`) and one that did not (2026-05-17, 14 turns) open with the same tool sequence — `get_current_time → read_memory → read_memory` — and diverge only at the fourth call. Same model, same prompt, same scaffold: **the difference is sampling.**
 
@@ -31,13 +32,17 @@ get_current_time → read_memory(health-profile/profile.md)
 
 Seven well-formed calls; function calling itself is not the problem. The model treats the memory store as the source of truth and never asks what the *procedure* is.
 
-**Instructing it harder makes it worse.** One session put the directive in the task text verbatim — *"before taking any action, call `load_skill` for each skill relevant to this task"*. The model did not comply and degraded: a single prose reply, halt after one turn, zero memory reads. (`grep -c "tool_call: load_skill"` on that trace returns 0; the three textual matches are the instruction echoed in frontmatter, header and user turn.)
+**On putting the instruction in the task text — a retracted claim.** An earlier version of this document reported that adding *"before taking any action, call `load_skill` for each skill relevant to this task"* to the task made behaviour **worse**: that session produced a single prose reply and halted after one turn with zero memory reads. That happened, and it was n=1.
 
-**The actionable conclusion.** The fix is not prompt engineering — that arm was run and lost. It is to stop treating the first `load_skill` as discretionary: constrain it with `tool_choice` on turn 1, or resolve the relevant skills host-side and inline their bodies. Both are unimplemented.
+Re-running the identical arm produced the opposite: 6 turns, and both `daily-routine` and `medication-reminder` loaded. **The claim did not replicate and is withdrawn.** What it actually demonstrated was the same non-determinism as everything else here — measured once, in the direction that happened to confirm the story being told. Worth naming as a failure mode: the run that agreed with the narrative was published from a single sample.
+
+The instruction arm now stands at 1/1 on `gemma4:12b`, which is not evidence that it helps either. It is one session.
+
+**The actionable conclusion.** Every arm measured — two frontier models, a 26B MoE, a 12B dense, with and without an explicit instruction — is consistent with a single explanation: whether the model volunteers `load_skill` is a coin-flip whose bias varies by model. Nothing in this data supports steering it by prompt. The fix is to stop treating the first call as discretionary — constrain it with `tool_choice` on turn 1, or resolve skills host-side and inline the bodies. Both are unimplemented.
 
 ### Limits
 
-n is small per model (1, 1, 7, 3). The 12B and 26B runs used different serving stacks (ollama vs OpenRouter), so "12B is worse than 26B" conflates size with stack and is not established. No control arm inlines skill bodies into the system prompt to measure what disclosure actually costs in task quality — that is the obvious next experiment and has not been run.
+n is small everywhere (1, 1, 7, 2, 1) and no arm has enough samples to estimate a rate with any precision; the 26B's 1/7 is the only cell where the sample says much. The 12B and 26B runs used different serving stacks (ollama vs OpenRouter), so "12B is worse than 26B" conflates size with stack and is **not** established — and the 12B instruction arm loading skills while the 26B baseline mostly did not should discourage reading any size ordering into this table at all. No control arm inlines skill bodies into the system prompt to measure what disclosure costs in task quality.
 
 ## What was fixed to get here
 
