@@ -6,11 +6,22 @@ import type { ChatMessage, ToolDefinition, ToolCall, GenerateResult } from './ty
 
 // ── Backend interface ──────────────────────────────────────────
 
+/**
+ * How the model is allowed to choose a tool.
+ *
+ * 'auto' leaves it to sampling — which is what the progressive-disclosure
+ * measurement in RESULTS.md found to be a coin flip. A ForcedTool makes the
+ * call mandatory for that turn, which is the arm that removes the sampling
+ * variance instead of trying to prompt around it.
+ */
+export type ForcedTool = { type: 'function'; function: { name: string } };
+export type ToolChoice = 'auto' | 'none' | ForcedTool;
+
 export interface Backend {
   generate(
     messages: ChatMessage[],
     tools?: ToolDefinition[],
-    toolChoice?: 'auto' | 'none',
+    toolChoice?: ToolChoice,
   ): Promise<GenerateResult>;
   getModel(): string;
   getProvider(): string;
@@ -62,7 +73,7 @@ export class OpenRouterBackend implements Backend {
   async generate(
     messages: ChatMessage[],
     tools?: ToolDefinition[],
-    toolChoice?: 'auto' | 'none',
+    toolChoice?: ToolChoice,
   ): Promise<GenerateResult> {
     const body: Record<string, unknown> = {
       model: this.model,
@@ -163,7 +174,7 @@ export class AnthropicBackend implements Backend {
   async generate(
     messages: ChatMessage[],
     tools?: ToolDefinition[],
-    toolChoice?: 'auto' | 'none',
+    toolChoice?: ToolChoice,
   ): Promise<GenerateResult> {
     // Extract system message
     let system: string | undefined;

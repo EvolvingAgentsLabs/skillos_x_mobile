@@ -66,9 +66,20 @@ export class Agent {
       this.step = turn + 1;
       console.log(`  [agent] --- Turn ${this.step} ---`);
 
+      // FORCE_SKILL_LOAD makes the turn-1 load_skill call mandatory instead of
+      // discretionary. RESULTS.md measures the discretionary arm at 1/7 on
+      // Gemma 26B with identical prompts, so this removes the sampling variance
+      // rather than trying to prompt around it — an attempt that was measured
+      // and did not help.
+      const forceSkillLoad = process.env.FORCE_SKILL_LOAD === '1';
+      const choice = forceSkillLoad && this.step === 1
+        ? { type: 'function' as const, function: { name: 'load_skill' } }
+        : undefined;
+      if (choice) console.log('  [agent] Forcing load_skill on turn 1 (tool_choice)');
+
       let result;
       try {
-        result = await this.backend.generate(messages, TOOL_DEFINITIONS);
+        result = await this.backend.generate(messages, TOOL_DEFINITIONS, choice);
       } catch (err) {
         console.error(`  [agent] Backend error: ${err}`);
         this.broadcast({ type: 'halt', status: 'error' });

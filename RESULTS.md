@@ -71,9 +71,33 @@ Roughly 6–8 minutes per session on an M-series Mac. The trace lands in `traces
 
 To reproduce the 26B arm, drop `OPENROUTER_BASE_URL`, set a real `OPENROUTER_API_KEY`, and `AGENT_MODEL=google/gemma-4-26b-a4b-it`. Expect to run it several times — that is the point.
 
+## The forced-call arm: implemented, blocked, not run
+
+The conclusion above says to stop leaving turn 1 to sampling. That arm is now
+implemented — `FORCE_SKILL_LOAD=1` passes
+`tool_choice: {type: "function", function: {name: "load_skill"}}` on the first turn —
+but **it has not produced a single data point, because ollama does not implement
+`tool_choice`.**
+
+Tested against ollama 0.31.2 with `gemma4:12b`, on a prompt with no natural reason to
+call the tool:
+
+| `tool_choice` sent | Tool call returned |
+|---|---|
+| `"required"` | none |
+| `{"type":"function","function":{"name":"load_skill"}}` | none |
+
+It accepts the parameter, returns HTTP 200, and ignores it. No error, no warning. A
+run under `FORCE_SKILL_LOAD=1` against a local server would therefore look exactly
+like the discretionary arm and quietly produce a meaningless comparison.
+
+Running this needs a server that honours the parameter — OpenRouter does, for models
+that support it. Until then the recommendation above is reasoning, not evidence.
+
 ## Open
 
-- Force the turn-1 `load_skill` with `tool_choice` and measure whether downstream task quality improves. This is the experiment the result above points at.
+- Run the forced-call arm against OpenRouter and measure whether downstream task
+  quality improves. The code is in place; only a compatible endpoint is missing.
 - Control arm: inline skill bodies into the system prompt, compare task completion against the disclosure arm.
 - Separate model size from serving stack: run 12B through OpenRouter, or 26B locally.
 - Does `gemma4:e4b` (the MoE variant, closer in shape to 26B-A4B) behave more like the 26B than the 12B dense?
