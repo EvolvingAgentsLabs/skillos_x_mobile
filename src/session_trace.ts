@@ -27,9 +27,15 @@ export class SessionTraceRecorder {
     const filename = `${ts}_${slug}.md`;
     const filePath = path.join(this.tracesDir, filename);
 
+    // provenance is written by the recorder and only by the recorder. Any trace
+    // authored by hand must say `provenance: handwritten`, and the dream engine
+    // skips those unless explicitly asked for them. Without this a fixture is
+    // indistinguishable from a run, and consolidation happily "discovers"
+    // whatever a human wrote into its input.
     const frontmatter = [
       '---',
       `timestamp: "${meta.timestamp}"`,
+      `provenance: recorded`,
       `task: "${meta.task.replace(/"/g, '\\"')}"`,
       `outcome: ${meta.outcome}`,
       `duration_ms: ${meta.durationMs}`,
@@ -76,18 +82,32 @@ export class SessionTraceRecorder {
     return filePath;
   }
 
-  static loadTranscripts(tracesDir: string, limit = 100): ParsedTranscript[] {
+  /**
+   * Load traces for dream consumption.
+   *
+   * Only traces the recorder itself wrote (`provenance: recorded`) are returned
+   * by default. Traces with any other provenance — or with none, which is how
+   * every hand-authored fixture reads — are skipped, and the count is reported
+   * to the caller so a run can never silently consolidate authored text.
+   */
+  static loadTranscripts(
+    tracesDir: string,
+    limit = 100,
+    opts: { includeUnverified?: boolean } = {},
+  ): ParsedTranscript[] {
     if (!fs.existsSync(tracesDir)) return [];
 
     const files = fs.readdirSync(tracesDir)
       .filter(f => f.endsWith('.md') && !f.startsWith('.'))
       .sort()
-      .reverse()
-      .slice(0, limit);
+      .reverse();
 
     const transcripts: ParsedTranscript[] = [];
+    let skipped = 0;
 
     for (const file of files) {
+      if (transcripts.length >= limit) break;
+
       const filePath = path.join(tracesDir, file);
       const raw = fs.readFileSync(filePath, 'utf-8');
 
@@ -96,6 +116,12 @@ export class SessionTraceRecorder {
 
       const frontmatter = fmMatch[1];
       const body = fmMatch[2];
+
+      const provenance = extractField(frontmatter, 'provenance') || 'unspecified';
+      if (provenance !== 'recorded' && !opts.includeUnverified) {
+        skipped++;
+        continue;
+      }
 
       const meta: SessionTraceMeta = {
         timestamp: extractField(frontmatter, 'timestamp') || '',
@@ -111,6 +137,13 @@ export class SessionTraceRecorder {
 
       const summary = body.trim().slice(0, 500);
       transcripts.push({ meta, summary, filePath });
+    }
+
+    if (skipped > 0) {
+      console.log(
+        `  [traces] Skipped ${skipped} trace(s) without \`provenance: recorded\`. ` +
+        `Pass includeUnverified to consolidate them anyway.`,
+      );
     }
 
     return transcripts;

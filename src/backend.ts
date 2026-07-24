@@ -343,18 +343,26 @@ const BACKEND_MODELS: Record<BackendType, string> = {
   anthropic: 'claude-sonnet-4-20250514',
 };
 
+// AGENT_MODEL wins over the per-backend default so a local OpenAI-compatible
+// server (ollama, vLLM) can be pointed at its own model id. Without this the
+// default slug is passed to a server that has never heard of it and every turn
+// 404s — see traces/ before 2026-07-24.
+function modelFor(type: BackendType): string {
+  return process.env.AGENT_MODEL || BACKEND_MODELS[type];
+}
+
 export function createBackend(type: BackendType, overrides: BackendConfig = {}): Backend {
   console.log(`  [backend] Creating ${type} backend...`);
 
   if (type === 'anthropic') {
     return new AnthropicBackend({
-      model: overrides.model || BACKEND_MODELS.anthropic,
+      model: overrides.model || process.env.ANTHROPIC_MODEL || BACKEND_MODELS.anthropic,
       ...overrides,
     });
   }
 
   return new OpenRouterBackend({
-    model: overrides.model || BACKEND_MODELS[type],
+    model: overrides.model || modelFor(type),
     ...overrides,
   }, type);
 }

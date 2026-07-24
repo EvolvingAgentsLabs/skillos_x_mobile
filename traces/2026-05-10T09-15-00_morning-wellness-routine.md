@@ -1,5 +1,7 @@
 ---
 timestamp: "2026-05-10T09:15:00.000Z"
+provenance: handwritten
+handwritten_note: "Authored by hand as demo seed data, not a recorded session. Tool result hashes are placeholders. Excluded from consolidation."
 task: "Good morning! Help me with my daily wellness routine."
 outcome: success
 duration_ms: 95000
